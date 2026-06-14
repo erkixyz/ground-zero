@@ -1,7 +1,25 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(docker compose *)",
+      "Bash(docker run *)",
+      "Bash(curl -s http://localhost:3000/api/hello)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(curl -s http://localhost:3000/api/notes)",
+      "Bash(curl -s -X POST http://localhost:3000/api/notes -H 'Content-Type: application/json' -d '{\"title\":\"Esimene märkme\",\"content\":\"See töötab Dockeris koos PostgreSQL ja Prismaga!\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(gh auth *)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero status)",
+      "Bash(brew install *)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero log --oneline)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero diff --stat HEAD)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero add .gitignore .dockerignore Dockerfile docker-compose.yml next.config.ts package.json package-lock.json prisma.config.ts prisma/ src/app/page.tsx src/app/actions.ts src/app/api/ src/app/components/ src/lib/ src/generated/)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero status --short)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero status --short src/generated/)",
+      "Bash(git -C /Users/erkik/Projects/ground-zero commit -m ' *)",
+      "Bash(gh repo *)"
     ]
   }
 }
