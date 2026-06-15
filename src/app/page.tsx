@@ -1,24 +1,31 @@
-import { prisma } from "@/lib/prisma";
 import { deleteNote } from "@/app/actions";
 import AddNoteForm from "@/app/components/AddNoteForm";
 
 export const dynamic = "force-dynamic";
 
+type Note = {
+  id: number;
+  title: string;
+  content: string;
+  createdAt: string;
+};
+
 export default async function Home() {
-  const notes = await prisma.note.findMany({
-    orderBy: { createdAt: "desc" },
+  const res = await fetch(`${process.env.API_URL}/api/notes`, {
+    cache: "no-store",
   });
+  const notes: Note[] = await res.json();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-white">Ground Zero</h1>
-          <p className="text-slate-400">Next.js · PostgreSQL · Prisma 7</p>
+          <p className="text-slate-400">Next.js · NestJS · PostgreSQL · Prisma 7</p>
           <p className="text-slate-600 text-xs">
             REST API:{" "}
-            <a href="/api/notes" className="text-blue-500 hover:text-blue-400 underline">
-              /api/notes
+            <a href="http://localhost:3001/api/notes" className="text-blue-500 hover:text-blue-400 underline">
+              localhost:3001/api/notes
             </a>
           </p>
         </div>
@@ -40,7 +47,7 @@ export default async function Home() {
                   <h2 className="font-semibold text-white truncate">{note.title}</h2>
                   <p className="text-slate-400 mt-1 text-sm">{note.content}</p>
                   <span className="text-slate-600 text-xs mt-2 block">
-                    {note.createdAt.toLocaleString("et-EE")}
+                    {new Date(note.createdAt).toLocaleString("et-EE")}
                   </span>
                 </div>
                 <form action={deleteNote.bind(null, note.id)}>

@@ -1,6 +1,5 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function createNote(formData: FormData) {
@@ -8,11 +7,17 @@ export async function createNote(formData: FormData) {
   const content = (formData.get("content") as string)?.trim();
   if (!title || !content) return;
 
-  await prisma.note.create({ data: { title, content } });
+  await fetch(`${process.env.API_URL}/api/notes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, content }),
+  });
   revalidatePath("/");
 }
 
 export async function deleteNote(id: number) {
-  await prisma.note.delete({ where: { id } });
+  await fetch(`${process.env.API_URL}/api/notes/${id}`, {
+    method: "DELETE",
+  });
   revalidatePath("/");
 }
