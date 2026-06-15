@@ -1,4 +1,19 @@
 services:
+  db-primary:
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_size=64MB
+      -c log_statement=all
+      -c log_line_prefix='[primary] '
+
+  db-secondary:
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_line_prefix='[secondary] '
+
   web:
     build:
       context: .

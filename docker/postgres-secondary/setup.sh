@@ -30,4 +30,6 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
 fi
 
 echo "[db-secondary] Starting PostgreSQL standby..."
-exec postgres -D "$PGDATA"
+# Shift leading "postgres" arg if present (passed via docker compose command:)
+[ "$1" = "postgres" ] && shift
+exec postgres -D "$PGDATA" "$@"
