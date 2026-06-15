@@ -13,8 +13,20 @@ datasource db {
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   title     String
   content   String
+  createdAt DateTime   @default(now())
+  files     NoteFile[]
+}
+
+model NoteFile {
+  id        Int      @id @default(autoincrement())
+  noteId    Int
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  filename  String
+  key       String   @unique
+  size      Int
+  mimeType  String
   createdAt DateTime @default(now())
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-export type NoteFormState = { error: string } | null;
+export type NoteFormState = { noteId: number } | { error: string } | null;
 
 export async function createNote(
   _prev: NoteFormState,
@@ -30,11 +30,19 @@ export async function createNote(
     return { error: data.message ?? `Salvestamine ebaõnnestus (${res.status})` };
   }
 
+  const note = await res.json();
   revalidatePath("/");
-  return null;
+  return { noteId: note.id };
 }
 
 export async function deleteNote(id: number) {
   await fetch(`${process.env.API_URL}/api/notes/${id}`, { method: "DELETE" });
+  revalidatePath("/");
+}
+
+export async function deleteNoteFile(noteId: number, fileId: number) {
+  await fetch(`${process.env.API_URL}/api/notes/${noteId}/files/${fileId}`, {
+    method: "DELETE",
+  });
   revalidatePath("/");
 }

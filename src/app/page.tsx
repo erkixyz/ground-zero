@@ -8,14 +8,25 @@ import Box from "@mui/material/Box";
 
 import NoteForm from "@/app/components/NoteForm";
 import DeleteButton from "@/app/components/DeleteButton";
+import NoteFileChip from "@/app/components/NoteFileChip";
 
 export const dynamic = "force-dynamic";
+
+type NoteFile = {
+  id: number;
+  filename: string;
+  key: string;
+  size: number;
+  mimeType: string;
+  url: string;
+};
 
 type Note = {
   id: number;
   title: string;
   content: string;
   createdAt: string;
+  files: NoteFile[];
 };
 
 export default async function Home() {
@@ -64,12 +75,24 @@ export default async function Home() {
                     >
                       {note.content}
                     </Typography>
-                    <Chip
-                      label={new Date(note.createdAt).toLocaleString("et-EE")}
-                      size="small"
-                      variant="outlined"
-                      sx={{ mt: 1.5, borderColor: "divider", color: "text.secondary", fontSize: 11 }}
-                    />
+
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1.5 }}>
+                      <Chip
+                        label={new Date(note.createdAt).toLocaleString("et-EE")}
+                        size="small"
+                        variant="outlined"
+                        sx={{ borderColor: "divider", color: "text.secondary", fontSize: 11 }}
+                      />
+                      {note.files.map((file) => (
+                        <NoteFileChip
+                          key={file.id}
+                          fileId={file.id}
+                          noteId={note.id}
+                          filename={file.filename}
+                          url={file.url}
+                        />
+                      ))}
+                    </Box>
                   </Box>
                   <DeleteButton id={note.id} />
                 </Box>
