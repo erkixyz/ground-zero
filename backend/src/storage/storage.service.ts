@@ -12,16 +12,25 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 @Injectable()
 export class StorageService implements OnModuleInit {
   private readonly client: S3Client;
+  private readonly publicClient: S3Client;
   private readonly bucket: string;
 
   constructor() {
+    const credentials = {
+      accessKeyId: process.env.MINIO_ACCESS_KEY!,
+      secretAccessKey: process.env.MINIO_SECRET_KEY!,
+    };
     this.client = new S3Client({
       endpoint: process.env.MINIO_ENDPOINT!,
       region: "us-east-1",
-      credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY!,
-        secretAccessKey: process.env.MINIO_SECRET_KEY!,
-      },
+      credentials,
+      forcePathStyle: true,
+    });
+    // Presigned URLs must use the browser-reachable endpoint, not the internal Docker hostname.
+    this.publicClient = new S3Client({
+      endpoint: process.env.MINIO_PUBLIC_URL ?? process.env.MINIO_ENDPOINT!,
+      region: "us-east-1",
+      credentials,
       forcePathStyle: true,
     });
     this.bucket = process.env.MINIO_BUCKET ?? "ground-zero";
@@ -48,7 +57,7 @@ export class StorageService implements OnModuleInit {
 
   async presignedGet(key: string, expiresIn = 3600): Promise<string> {
     return getSignedUrl(
-      this.client,
+      this.publicClient,
       new GetObjectCommand({ Bucket: this.bucket, Key: key }),
       { expiresIn },
     );
