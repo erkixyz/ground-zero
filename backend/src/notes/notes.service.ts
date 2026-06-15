@@ -23,8 +23,10 @@ export class NotesService {
     );
   }
 
-  create(title: string, content: string) {
-    return this.prisma.write.note.create({ data: { title, content } });
+  create(title: string, content: string, category?: string, pinned?: boolean) {
+    return this.prisma.write.note.create({
+      data: { title, content, category: category || null, pinned: pinned ?? false },
+    });
   }
 
   async remove(id: number) {

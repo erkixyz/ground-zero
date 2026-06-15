@@ -5,6 +5,7 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import Box from "@mui/material/Box";
+import PushPinIcon from "@mui/icons-material/PushPin";
 
 import NoteForm from "@/app/components/NoteForm";
 import DeleteButton from "@/app/components/DeleteButton";
@@ -21,10 +22,19 @@ type NoteFile = {
   url: string;
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  isiklik: "Isiklik",
+  too: "Töö",
+  ideed: "Ideed",
+  muu: "Muu",
+};
+
 type Note = {
   id: number;
   title: string;
   content: string;
+  category: string | null;
+  pinned: boolean;
   createdAt: string;
   files: NoteFile[];
 };
@@ -62,13 +72,22 @@ export default async function Home() {
           </Typography>
         ) : (
           notes.map((note) => (
-            <Card key={note.id}>
+            <Card
+              key={note.id}
+              sx={note.pinned ? { borderColor: "primary.dark", borderWidth: 1, borderStyle: "solid" } : {}}
+            >
               <CardContent sx={{ pb: "12px !important" }}>
                 <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 600 }} noWrap>
-                      {note.title}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                      {note.pinned && (
+                        <PushPinIcon sx={{ fontSize: 15, color: "primary.main", flexShrink: 0 }} />
+                      )}
+                      <Typography sx={{ fontWeight: 600 }} noWrap>
+                        {note.title}
+                      </Typography>
+                    </Box>
+
                     <Typography
                       variant="body2"
                       sx={{ color: "text.secondary", mt: 0.5, whiteSpace: "pre-wrap" }}
@@ -83,6 +102,15 @@ export default async function Home() {
                         variant="outlined"
                         sx={{ borderColor: "divider", color: "text.secondary", fontSize: 11 }}
                       />
+                      {note.category && (
+                        <Chip
+                          label={CATEGORY_LABELS[note.category] ?? note.category}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          sx={{ fontSize: 11 }}
+                        />
+                      )}
                       {note.files.map((file) => (
                         <NoteFileChip
                           key={file.id}

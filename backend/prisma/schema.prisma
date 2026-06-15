@@ -16,6 +16,8 @@ model Note {
   id        Int        @id @default(autoincrement())
   title     String
   content   String
+  category  String?
+  pinned    Boolean    @default(false)
   createdAt DateTime   @default(now())
   files     NoteFile[]
 }

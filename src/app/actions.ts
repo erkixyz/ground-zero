@@ -10,6 +10,8 @@ export async function createNote(
 ): Promise<NoteFormState> {
   const title = (formData.get("title") as string)?.trim();
   const content = (formData.get("content") as string)?.trim();
+  const category = (formData.get("category") as string) || undefined;
+  const pinned = formData.get("pinned") === "on";
 
   if (!title) return { error: "Pealkiri on kohustuslik" };
   if (!content) return { error: "Sisu on kohustuslik" };
@@ -19,7 +21,7 @@ export async function createNote(
     res = await fetch(`${process.env.API_URL}/api/notes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, category, pinned }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };

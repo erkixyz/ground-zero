@@ -23,11 +23,11 @@ export class NotesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() body: { title: string; content: string }) {
+  create(@Body() body: { title: string; content: string; category?: string; pinned?: boolean }) {
     if (!body.title?.trim() || !body.content?.trim()) {
       throw new BadRequestException("title ja content on kohustuslikud");
     }
-    return this.notesService.create(body.title.trim(), body.content.trim());
+    return this.notesService.create(body.title.trim(), body.content.trim(), body.category, body.pinned);
   }
 
   @Delete(":id")
