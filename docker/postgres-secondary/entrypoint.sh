@@ -6,4 +6,4 @@ mkdir -p "$PGDATA"
 chown postgres:postgres "$PGDATA"
 chmod 700 "$PGDATA"
 
-exec su-exec postgres bash /secondary-setup.sh
+exec gosu postgres bash /secondary-setup.sh
