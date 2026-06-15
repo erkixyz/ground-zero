@@ -21,9 +21,12 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/groundzero
+      - DATABASE_URL=postgresql://postgres:postgres@db-primary:5432/groundzero
+      - DATABASE_REPLICA_URL=postgresql://postgres:postgres@db-secondary:5432/groundzero
     depends_on:
-      db:
+      db-primary:
+        condition: service_healthy
+      db-secondary:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/hello || exit 1"]
@@ -32,16 +35,24 @@ services:
       retries: 10
     restart: unless-stopped
 
-  db:
+  db-primary:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: groundzero
+      REPLICATION_USER: replicator
+      REPLICATION_PASSWORD: replicator_password
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_size=64MB
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_primary_data:/var/lib/postgresql/data
+      - ./docker/postgres-primary/init.sh:/docker-entrypoint-initdb.d/init.sh
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -49,5 +60,32 @@ services:
       retries: 5
     restart: unless-stopped
 
+  db-secondary:
+    image: postgres:17-alpine
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PRIMARY_HOST: db-primary
+      PRIMARY_PORT: 5432
+      REPLICATION_USER: replicator
+      REPLICATION_PASSWORD: replicator_password
+    entrypoint: ["bash", "/entrypoint.sh"]
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_secondary_data:/var/lib/postgresql/data
+      - ./docker/postgres-secondary/entrypoint.sh:/entrypoint.sh
+      - ./docker/postgres-secondary/setup.sh:/secondary-setup.sh
+    depends_on:
+      db-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
 volumes:
-  postgres_data:
+  postgres_primary_data:
+  postgres_secondary_data:
