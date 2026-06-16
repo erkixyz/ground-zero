@@ -12,7 +12,13 @@ services:
     command: >
       postgres
       -c log_statement=all
-      -c log_line_prefix='[secondary] '
+      -c log_line_prefix='[secondary-1] '
+
+  db-secondary-2:
+    command: >
+      postgres
+      -c log_statement=all
+      -c log_line_prefix='[secondary-2] '
 
   web:
     build:

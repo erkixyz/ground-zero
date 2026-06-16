@@ -23,7 +23,7 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@db-primary:5432/groundzero
-      - DATABASE_REPLICA_URL=postgresql://postgres:postgres@db-secondary:5432/groundzero
+      - DATABASE_REPLICA_URL=postgresql://postgres:postgres@db-read-lb:5432/groundzero
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_PUBLIC_URL=http://localhost:9000
       - MINIO_ACCESS_KEY=minioadmin
@@ -32,7 +32,7 @@ services:
     depends_on:
       db-primary:
         condition: service_healthy
-      db-secondary:
+      db-read-lb:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -54,7 +54,7 @@ services:
     command: >
       postgres
       -c wal_level=replica
-      -c max_wal_senders=3
+      -c max_wal_senders=5
       -c wal_keep_size=64MB
     ports:
       - "5432:5432"
@@ -94,6 +94,51 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  db-secondary-2:
+    image: postgres:17-alpine
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PRIMARY_HOST: db-primary
+      PRIMARY_PORT: 5432
+      REPLICATION_USER: replicator
+      REPLICATION_PASSWORD: replicator_password
+    entrypoint: ["bash", "/entrypoint.sh"]
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_secondary_2_data:/var/lib/postgresql/data
+      - ./docker/postgres-secondary/entrypoint.sh:/entrypoint.sh
+      - ./docker/postgres-secondary/setup.sh:/secondary-setup.sh
+    depends_on:
+      db-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  db-read-lb:
+    image: haproxy:3.0-alpine
+    volumes:
+      - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "5435:5432"
+      - "8404:8404"
+    depends_on:
+      db-secondary:
+        condition: service_healthy
+      db-secondary-2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 5432"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
@@ -115,4 +160,5 @@ services:
 volumes:
   postgres_primary_data:
   postgres_secondary_data:
+  postgres_secondary_2_data:
   minio_data:
