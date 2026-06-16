@@ -1,0 +1,5 @@
+# Enforce LF for shell scripts (must not be CRLF inside Docker containers)
+*.sh text eol=lf
+
+# Default: normalize line endings on commit, use platform native on checkout
+* text=auto
