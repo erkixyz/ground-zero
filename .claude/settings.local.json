@@ -29,7 +29,16 @@
       "Bash(curl -s -X POST http://localhost:3001/api/notes/11/files -F 'file=@/tmp/test.txt;type=text/plain')",
       "Bash(curl -s -X POST http://localhost:3001/api/notes -H 'Content-Type: application/json' -d '{\"title\":\"ws test\",\"content\":\"trigger\"}')",
       "Bash(wait)",
-      "Bash(curl -s -X POST http://localhost:3001/api/notes -H 'Content-Type: application/json' -d '{\"title\":\"logi test\",\"content\":\"kas logib?\",\"category\":\"ideed\",\"pinned\":true}')"
+      "Bash(curl -s -X POST http://localhost:3001/api/notes -H 'Content-Type: application/json' -d '{\"title\":\"logi test\",\"content\":\"kas logib?\",\"category\":\"ideed\",\"pinned\":true}')",
+      "PowerShell(docker compose down)",
+      "PowerShell(docker compose build --no-cache)",
+      "PowerShell(docker compose up -d)",
+      "PowerShell(docker exec ground-zero-db-primary-1 cat -A /var/lib/postgresql/data/pg_hba.conf)",
+      "PowerShell(tail -5 2>&1)",
+      "Bash(docker exec *)",
+      "PowerShell(docker exec ground-zero-db-primary-1 sh -c \"cat -A /var/lib/postgresql/data/pg_hba.conf\" 2>&1)",
+      "PowerShell(docker compose down -v)",
+      "PowerShell(docker compose up -d 2>&1)"
     ]
   }
 }
