@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:3001
     ports:
       - "3000:3000"
     environment:
@@ -29,6 +31,9 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin123
       - MINIO_BUCKET=ground-zero
+      - REDIS_URL=redis://redis:6379
+      - SESSION_SECRET=change-me-in-production
+      - CORS_ORIGIN=http://localhost:3000
     depends_on:
       db-primary:
         condition: service_healthy
@@ -36,11 +41,26 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/hello || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   db-primary:
@@ -162,3 +182,4 @@ volumes:
   postgres_secondary_data:
   postgres_secondary_2_data:
   minio_data:
+  redis_data:

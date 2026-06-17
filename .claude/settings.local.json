@@ -39,7 +39,10 @@
       "PowerShell(docker exec ground-zero-db-primary-1 sh -c \"cat -A /var/lib/postgresql/data/pg_hba.conf\" 2>&1)",
       "PowerShell(docker compose down -v)",
       "PowerShell(docker compose up -d 2>&1)",
-      "Bash(docker pull *)"
+      "Bash(docker pull *)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/erkik/.nvm/versions/node/**)",
+      "Bash(node -e \"require\\('/Users/erkik/Projects/ground-zero/backend/node_modules/connect-redis'\\)\")"
     ]
   }
 }

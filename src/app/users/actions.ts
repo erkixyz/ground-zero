@@ -1,8 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export type UserFormState = { ok: true } | { error: string } | null;
+
+async function forwardCookie() {
+  const h = await headers();
+  return h.get("cookie") ?? "";
+}
 
 export async function createUser(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const firstName = (formData.get("firstName") as string)?.trim();
@@ -66,6 +72,10 @@ export async function updateUser(id: number, _prev: UserFormState, formData: For
 }
 
 export async function deleteUser(id: number) {
-  await fetch(`${process.env.API_URL}/api/users/${id}`, { method: "DELETE" });
+  const cookie = await forwardCookie();
+  await fetch(`${process.env.API_URL}/api/users/${id}`, {
+    method: "DELETE",
+    headers: cookie ? { Cookie: cookie } : {},
+  });
   revalidatePath("/users");
 }

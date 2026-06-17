@@ -1,12 +1,39 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { IoAdapter } from "@nestjs/platform-socket.io";
+import { NestExpressApplication } from "@nestjs/platform-express";
+import * as session from "express-session";
+import { createClient } from "redis";
+import { RedisStore } from "connect-redis";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  const redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+  redisClient.on("error", (err) => console.error("Redis error:", err));
+  await redisClient.connect();
+
+  app.use(
+    session({
+      store: new RedisStore({ client: redisClient as any }),
+      secret: process.env.SESSION_SECRET || "dev-secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 24 * 60 * 60 * 1000,
+      },
+    }),
+  );
+
   app.setGlobalPrefix("api");
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
+  });
   app.useWebSocketAdapter(new IoAdapter(app));
   await app.listen(process.env.PORT ?? 3001);
 }

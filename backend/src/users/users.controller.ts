@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -10,7 +11,9 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
 } from "@nestjs/common";
+import { Request } from "express";
 import { UsersService } from "./users.service";
 
 @Controller("users")
@@ -53,7 +56,10 @@ export class UsersController {
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param("id", ParseIntPipe) id: number) {
+  async remove(@Param("id", ParseIntPipe) id: number, @Req() req: Request & { session: any }) {
+    if (req.session?.userId === id) {
+      throw new ForbiddenException("Ei saa iseennast kustutada");
+    }
     await this.usersService.remove(id);
   }
 }

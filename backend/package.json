@@ -17,8 +17,12 @@
     "@nestjs/websockets": "^10.4.22",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@types/express-session": "^1.19.0",
+    "connect-redis": "^9.0.0",
     "dotenv": "^17.4.2",
+    "express-session": "^1.19.0",
     "pg": "^8.21.0",
+    "redis": "^6.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3"

@@ -17,13 +17,16 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import CircularProgress from "@mui/material/CircularProgress";
+import Tooltip from "@mui/material/Tooltip";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import UserFormDialog, { UserRow } from "./UserFormDialog";
 import { deleteUser } from "../actions";
+import { useAuth } from "@/app/components/AuthProvider";
 
 export default function UsersClient({ users }: { users: UserRow[] }) {
+  const { user: currentUser } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
@@ -74,29 +77,37 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id} hover>
-                  <TableCell>{user.firstName}</TableCell>
-                  <TableCell>{user.lastName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>
-                    {new Date(user.createdAt).toLocaleDateString("et-EE")}
-                  </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    <IconButton size="small" onClick={() => openEdit(user)} aria-label="Muuda">
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDeleteTarget(user)}
-                      sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
-                      aria-label="Kustuta"
-                    >
-                      <DeleteOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {users.map((user) => {
+                const isSelf = currentUser?.id === user.id;
+                return (
+                  <TableRow key={user.id} hover>
+                    <TableCell>{user.firstName}</TableCell>
+                    <TableCell>{user.lastName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>
+                      {new Date(user.createdAt).toLocaleDateString("et-EE")}
+                    </TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      <IconButton size="small" onClick={() => openEdit(user)} aria-label="Muuda">
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+                      <Tooltip title={isSelf ? "Ei saa iseennast kustutada" : "Kustuta"}>
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => setDeleteTarget(user)}
+                            disabled={isSelf}
+                            sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
+                            aria-label="Kustuta"
+                          >
+                            <DeleteOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -109,7 +120,10 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
         <DialogContent>
           <Typography>
             Kas oled kindel, et soovid kustutada kasutaja{" "}
-            <strong>{deleteTarget?.firstName} {deleteTarget?.lastName}</strong>?
+            <strong>
+              {deleteTarget?.firstName} {deleteTarget?.lastName}
+            </strong>
+            ?
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
