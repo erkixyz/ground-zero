@@ -38,7 +38,8 @@
       "Bash(docker exec *)",
       "PowerShell(docker exec ground-zero-db-primary-1 sh -c \"cat -A /var/lib/postgresql/data/pg_hba.conf\" 2>&1)",
       "PowerShell(docker compose down -v)",
-      "PowerShell(docker compose up -d 2>&1)"
+      "PowerShell(docker compose up -d 2>&1)",
+      "Bash(docker pull *)"
     ]
   }
 }
