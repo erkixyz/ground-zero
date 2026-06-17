@@ -16,7 +16,10 @@ export class NotesService {
   async findAll() {
     const notes = await this.prisma.read.note.findMany({
       orderBy: { createdAt: "desc" },
-      include: { files: true },
+      include: {
+        files: true,
+        author: { select: { firstName: true, lastName: true } },
+      },
     });
 
     return Promise.all(
@@ -27,10 +30,10 @@ export class NotesService {
     );
   }
 
-  async create(title: string, content: string, category?: string, pinned?: boolean) {
-    this.logger.log(`Loon märget: "${title}" [kategooria=${category ?? "—"}, tähtsustatud=${pinned ?? false}]`);
+  async create(title: string, content: string, category?: string, pinned?: boolean, authorId?: number) {
+    this.logger.log(`Loon märget: "${title}" [kategooria=${category ?? "—"}, tähtsustatud=${pinned ?? false}, autor=${authorId ?? "anonüümne"}]`);
     const note = await this.prisma.write.note.create({
-      data: { title, content, category: category || null, pinned: pinned ?? false },
+      data: { title, content, category: category || null, pinned: pinned ?? false, authorId: authorId ?? null },
     });
     this.logger.log(`Märge loodud: id=${note.id}`);
     this.events.notesChanged();

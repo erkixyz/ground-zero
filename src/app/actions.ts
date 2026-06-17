@@ -1,8 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export type NoteFormState = { noteId: number } | { error: string } | null;
+
+async function forwardCookie() {
+  const h = await headers();
+  return h.get("cookie") ?? "";
+}
 
 export async function createNote(
   _prev: NoteFormState,
@@ -16,11 +22,16 @@ export async function createNote(
   if (!title) return { error: "Pealkiri on kohustuslik" };
   if (!content) return { error: "Sisu on kohustuslik" };
 
+  const cookie = await forwardCookie();
+
   let res: Response;
   try {
     res = await fetch(`${process.env.API_URL}/api/notes`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
       body: JSON.stringify({ title, content, category, pinned }),
     });
   } catch {

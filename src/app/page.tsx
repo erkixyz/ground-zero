@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Card from "@mui/material/Card";
@@ -6,12 +8,11 @@ import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import Box from "@mui/material/Box";
 import PushPinIcon from "@mui/icons-material/PushPin";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 
 import NoteForm from "@/app/components/NoteForm";
 import DeleteButton from "@/app/components/DeleteButton";
 import NoteFileChip from "@/app/components/NoteFileChip";
-
-export const dynamic = "force-dynamic";
 
 type NoteFile = {
   id: number;
@@ -37,6 +38,7 @@ type Note = {
   pinned: boolean;
   createdAt: string;
   files: NoteFile[];
+  author: { firstName: string; lastName: string } | null;
 };
 
 export default async function Home() {
@@ -98,6 +100,13 @@ export default async function Home() {
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1.5 }}>
                       <Chip
                         label={new Date(note.createdAt).toLocaleString("et-EE")}
+                        size="small"
+                        variant="outlined"
+                        sx={{ borderColor: "divider", color: "text.secondary", fontSize: 11 }}
+                      />
+                      <Chip
+                        icon={<PersonOutlinedIcon sx={{ fontSize: "13px !important" }} />}
+                        label={note.author ? `${note.author.firstName} ${note.author.lastName}` : "Anonüümne"}
                         size="small"
                         variant="outlined"
                         sx={{ borderColor: "divider", color: "text.secondary", fontSize: 11 }}
