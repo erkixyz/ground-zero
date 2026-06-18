@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Drawer from "@mui/material/Drawer";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 import CloseIcon from "@mui/icons-material/Close";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-export default function ReadmeDrawer({ open, onClose }: Props) {
+export default function ReadmeDialog({ open, onClose }: Props) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,23 +30,15 @@ export default function ReadmeDrawer({ open, onClose }: Props) {
   }, [open, content]);
 
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      slotProps={{ paper: { sx: { width: { xs: "100vw", sm: 600 }, p: 0 } } }}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", px: 3, py: 2, gap: 1 }}>
-        <Typography variant="h6" sx={{ flex: 1, fontWeight: 700 }}>
-          README
-        </Typography>
-        <IconButton onClick={onClose} size="small">
+    <Dialog open={open} onClose={onClose} fullScreen>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
+        README
+        <IconButton onClick={onClose} size="small" sx={{ ml: "auto" }}>
           <CloseIcon />
         </IconButton>
-      </Box>
-      <Divider />
+      </DialogTitle>
 
-      <Box sx={{ overflowY: "auto", px: 3, py: 2, flex: 1 }}>
+      <DialogContent dividers sx={{ overflowY: "auto" }}>
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
             <CircularProgress size={24} />
@@ -54,6 +47,8 @@ export default function ReadmeDrawer({ open, onClose }: Props) {
         {content && (
           <Box
             sx={{
+              maxWidth: 900,
+              mx: "auto",
               "& h1": { fontSize: "1.5rem", fontWeight: 700, mt: 3, mb: 1 },
               "& h2": { fontSize: "1.2rem", fontWeight: 700, mt: 3, mb: 1, borderBottom: "1px solid", borderColor: "divider", pb: 0.5 },
               "& h3": { fontSize: "1rem", fontWeight: 700, mt: 2, mb: 0.5 },
@@ -85,10 +80,10 @@ export default function ReadmeDrawer({ open, onClose }: Props) {
               "& blockquote": { borderLeft: "3px solid", borderColor: "primary.main", pl: 2, ml: 0, color: "text.secondary" },
             }}
           >
-            <ReactMarkdown>{content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           </Box>
         )}
-      </Box>
-    </Drawer>
+      </DialogContent>
+    </Dialog>
   );
 }
