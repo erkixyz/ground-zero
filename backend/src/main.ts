@@ -6,6 +6,7 @@ import * as session from "express-session";
 import { createClient } from "redis";
 import { RedisStore } from "connect-redis";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { collectDefaultMetrics, Registry, Counter, Histogram } from 'prom-client';
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -29,6 +30,44 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Prometheus metrics
+  const metricsRegistry = new Registry();
+  collectDefaultMetrics({ register: metricsRegistry });
+
+  const httpRequestsTotal = new Counter({
+    name: 'http_requests_total',
+    help: 'Total number of HTTP requests',
+    labelNames: ['method', 'route', 'status_code'],
+    registers: [metricsRegistry],
+  });
+
+  const httpRequestDuration = new Histogram({
+    name: 'http_request_duration_seconds',
+    help: 'HTTP request duration in seconds',
+    labelNames: ['method', 'route', 'status_code'],
+    buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+    registers: [metricsRegistry],
+  });
+
+  const expressApp = app.getHttpAdapter().getInstance();
+
+  expressApp.use((req: any, res: any, next: any) => {
+    const start = process.hrtime.bigint();
+    res.on('finish', () => {
+      const duration = Number(process.hrtime.bigint() - start) / 1e9;
+      const route = req.route?.path ?? req.path ?? 'unknown';
+      const labels = { method: req.method, route, status_code: String(res.statusCode) };
+      httpRequestsTotal.inc(labels);
+      httpRequestDuration.observe(labels, duration);
+    });
+    next();
+  });
+
+  expressApp.get('/metrics', async (_req: any, res: any) => {
+    res.set('Content-Type', metricsRegistry.contentType);
+    res.end(await metricsRegistry.metrics());
+  });
 
   app.setGlobalPrefix("api");
   app.enableCors({

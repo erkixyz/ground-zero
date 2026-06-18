@@ -112,6 +112,11 @@ Full-stack web application with a highly available, load-balanced container infr
 | `minio-lb` | nginx:alpine | MinIO round-robin load balancer | 9000, 9001 |
 | `minio-1` | minio/minio | MinIO node 1 (distributed, 2 drives) | — |
 | `minio-2` | minio/minio | MinIO node 2 (distributed, 2 drives) | — |
+| `prometheus` | prom/prometheus | Metrics collection & storage | 9090 |
+| `grafana` | grafana/grafana-oss | Metrics dashboards | 3002 |
+| `postgres-exporter` | prometheuscommunity/postgres-exporter | PostgreSQL metrics exporter | — |
+| `redis-exporter` | oliver006/redis_exporter | Redis metrics exporter | — |
+| `nginx-exporter` | nginx/nginx-prometheus-exporter | nginx metrics exporter | — |
 
 ---
 
@@ -157,6 +162,9 @@ redis-sentinel ×3    ▼                           │
 | `localhost:5435` | PostgreSQL reads via LB |
 | `localhost:6379` | Redis via LB |
 | <http://localhost:15672> | RabbitMQ Management UI (guest/guest) |
+| <http://localhost:9090> | Prometheus |
+| <http://localhost:3002> | Grafana dashboards (admin/admin) |
+| <http://localhost:3001/metrics> | NestJS Prometheus metrics |
 
 ---
 
@@ -229,6 +237,22 @@ Two MinIO nodes run in distributed mode with 2 drives each (4 drives total), sat
 ### WebSocket & RabbitMQ
 
 Both API instances subscribe to the `notes_events` fanout exchange on startup (each with its own exclusive, auto-delete queue). When any instance publishes a `notes:changed` event (e.g. after creating or deleting a note or file), RabbitMQ delivers the message to every subscriber. Each instance then broadcasts `notes:changed` to its own connected WebSocket clients — ensuring all browser clients receive real-time updates regardless of which API instance handled the mutation.
+
+### Observability — Prometheus & Grafana
+
+Every service exposes metrics which Prometheus scrapes every 15 seconds and retains for 7 days. Grafana (port 3002, admin/admin) auto-provisions a "Ground Zero" dashboard on first start.
+
+**Metrics sources:**
+
+| Exporter | Source | Scrape target |
+| --- | --- | --- |
+| NestJS `prom-client` | HTTP request rate & latency, Node.js heap | `api:3001/metrics`, `api-2:3001/metrics` |
+| `postgres-exporter` | PostgreSQL connections, query stats | `postgres-exporter:9187` |
+| `redis-exporter` | Redis memory, hit rate, connected clients | `redis-exporter:9121` |
+| RabbitMQ built-in | Queue depth, message rates | `rabbitmq:15692/metrics` |
+| `nginx-exporter` | nginx active connections, request rate | `nginx-exporter:9113` |
+
+The NestJS `/metrics` endpoint is a raw Express route registered before the `/api` global prefix, so it is reachable at `http://localhost:3001/metrics` without an `/api` prefix.
 
 ---
 
