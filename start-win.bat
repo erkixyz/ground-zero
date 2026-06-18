@@ -23,6 +23,27 @@ if "%DEV%"=="1" (
 )
 
 echo.
+echo Kontrollin konteinereid...
+
+:check_loop
+set CREATED_COUNT=0
+for /f "tokens=*" %%C in ('docker compose ps --all --format "{{.Name}} {{.State}}" 2^>nul') do (
+  echo %%C | findstr /i " created" > nul
+  if not errorlevel 1 (
+    set /a CREATED_COUNT+=1
+    for /f "tokens=1" %%N in ("%%C") do (
+      echo   Käivitan konteineri: %%N
+      docker start %%N > nul 2>&1
+    )
+  )
+)
+
+if %CREATED_COUNT% GTR 0 (
+  timeout /t 5 /nobreak > nul
+  goto check_loop
+)
+
+echo.
 echo Teenused on käivitatud:
 echo   Frontend :  http://localhost:3000  (load balancer -^> web + web-2)
 echo   API      :  http://localhost:3001  (load balancer -^> api + api-2)
