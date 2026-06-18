@@ -1,36 +1,223 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ground Zero
 
-## Getting Started
+Full-stack web application with a highly available, load-balanced container infrastructure.
 
-First, run the development server:
+**Stack:** Next.js (frontend) · NestJS (API) · PostgreSQL · Redis · MinIO
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Architecture
+
+```text
+                              ┌──────────────────┐
+                              │     BROWSER      │
+                              └────────┬─────────┘
+                                       │
+                              :3000    │    :3001
+                         ┌────────────┴────────────┐
+                         │       app-lb (nginx)     │
+                         │   HTTP load balancer     │
+                         │   stats  →  :8080        │
+                         └─────────┬────────────────┘
+                                   │
+                   ┌───────────────┴────────────────┐
+                   │ round-robin                     │ round-robin
+                   ▼                                 ▼
+        ┌──────────────────┐             ┌──────────────────┐
+        │    WEB LAYER     │             │    API LAYER     │
+        │                  │             │                  │
+        │  ┌────────────┐  │             │  ┌────────────┐  │
+        │  │    web     │  │             │  │    api     │  │
+        │  │  Next.js   │  │             │  │  NestJS    │  │
+        │  │   :3000    │  │             │  │   :3001    │  │
+        │  └────────────┘  │             │  └────────────┘  │
+        │  ┌────────────┐  │             │  ┌────────────┐  │
+        │  │   web-2    │  │             │  │   api-2    │  │
+        │  │  Next.js   │  │             │  │  NestJS    │  │
+        │  │   :3000    │  │             │  │   :3001    │  │
+        │  └────────────┘  │             │  └────────────┘  │
+        └──────────────────┘             └────────┬─────────┘
+                                                  │
+                          ┌───────────────────────┼──────────────────────┐
+                          │                       │                      │
+                          ▼                       ▼                      ▼
+           ┌──────────────────────┐  ┌─────────────────────┐  ┌─────────────────┐
+           │   redis-lb (haproxy) │  │     db-primary       │  │      minio      │
+           │   active/passive     │  │    PostgreSQL 17      │  │  object storage │
+           │   role:master check  │  │    write endpoint     │  │  S3-compatible  │
+           │   stats → :8405      │  │    :5432              │  │  :9000  :9001   │
+           └──────────┬───────────┘  └──────────┬───────────┘  └─────────────────┘
+                      │                         │ streaming replication
+              ┌───────┴───────┐        ┌────────┴─────────────────┐
+              │               │        │                           │
+              ▼               ▼        ▼                           ▼
+   ┌─────────────────┐  ┌──────────────────┐         ┌────────────────────────┐
+   │  redis-primary  │  │  db-secondary    │         │     db-secondary-2     │
+   │    (master)     │  │  (replica) :5433 │         │     (replica)  :5434   │
+   │    R/W          │  └──────────────────┘         └────────────────────────┘
+   └────────┬────────┘             └──────────────────────────┘
+            │ replication                             │
+            ▼                           ┌─────────────▼──────────────┐
+   ┌─────────────────┐                  │    db-read-lb (haproxy)    │
+   │  redis-replica  │                  │    round-robin reads       │
+   │    (replica)    │                  │    read endpoint  :5435    │
+   │    R only       │                  │    stats → :8404           │
+   └─────────────────┘                  └────────────────────────────┘
+            │
+   ┌────────┴──────────────────────────────────┐
+   │           Redis Sentinel  (×3)            │
+   │                                           │
+   │   sentinel-1 · sentinel-2 · sentinel-3    │
+   │                                           │
+   │   quorum: 2 / 3                           │
+   │   down-after: 5 s                         │
+   │   auto-promotes replica on failure        │
+   └───────────────────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Services
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Container | Image | Role | Exposed port(s) |
+| --- | --- | --- | --- |
+| `app-lb` | nginx:alpine | HTTP load balancer (web + api) | 3000, 3001, 8080 |
+| `web` | ground-zero-web | Next.js frontend (instance 1) | — |
+| `web-2` | ground-zero-web | Next.js frontend (instance 2) | — |
+| `api` | ground-zero-api | NestJS API (instance 1) | — |
+| `api-2` | ground-zero-api | NestJS API (instance 2) | — |
+| `redis-lb` | haproxy:3.0 | Redis active/passive LB | 6379, 8405 |
+| `redis-primary` | redis:7 | Redis master (R/W) | — |
+| `redis-replica` | redis:7 | Redis replica (R only) | — |
+| `redis-sentinel-1/2/3` | redis:7 | Sentinel, quorum 2/3 | — |
+| `db-primary` | postgres:17 | PostgreSQL primary (writes) | 5432 |
+| `db-secondary` | postgres:17 | PostgreSQL replica 1 (reads) | 5433 |
+| `db-secondary-2` | postgres:17 | PostgreSQL replica 2 (reads) | 5434 |
+| `db-read-lb` | haproxy:3.0 | PostgreSQL read load balancer | 5435, 8404 |
+| `minio` | minio/minio | S3-compatible object storage | 9000, 9001 |
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Startup order
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+redis-primary  db-primary  minio
+      │              │
+      ▼              ▼
+redis-replica   db-secondary
+      │         db-secondary-2
+      ▼              │
+redis-sentinel ×3    ▼
+      │          db-read-lb
+      ▼              │
+  redis-lb           │
+      └──────┬────────┘
+             ▼
+          api  api-2
+             │
+          web  web-2
+             │
+          app-lb
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Endpoints
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| URL | Description |
+| --- | --- |
+| <http://localhost:3000> | Frontend (via nginx LB) |
+| <http://localhost:3001> | API (via nginx LB) |
+| <http://localhost:8080/nginx-status> | nginx load balancer stats |
+| <http://localhost:8404> | HAProxy stats — PostgreSQL read LB |
+| <http://localhost:8405> | HAProxy stats — Redis LB |
+| <http://localhost:9001> | MinIO Console |
+| `localhost:5432` | PostgreSQL primary (writes) |
+| `localhost:5433` | PostgreSQL replica 1 |
+| `localhost:5434` | PostgreSQL replica 2 |
+| `localhost:5435` | PostgreSQL reads via LB |
+| `localhost:6379` | Redis via LB |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Usage
+
+### Production
+
+```bash
+# Mac / Linux
+./start-mac.sh
+./stop-mac.sh
+
+# Windows
+start-win.bat
+stop-win.bat
+```
+
+### Development
+
+```bash
+# Mac / Linux — mounts source into containers, enables hot reload
+./start-mac.sh --dev
+./stop-mac.sh
+
+# Windows
+start-win.bat --dev
+stop-win.bat
+```
+
+### Logs
+
+```bash
+docker compose logs -f               # all services
+docker compose logs -f api api-2     # API only
+docker compose logs -f app-lb        # nginx LB
+```
+
+---
+
+## High Availability
+
+### Redis — Sentinel failover
+
+Three Sentinel instances monitor `redis-primary`. If the primary becomes unreachable for **5 seconds**, a majority vote (2 of 3) triggers automatic failover:
+
+1. Sentinel promotes `redis-replica` → new master
+2. HAProxy detects the role change via `INFO` → `role:master` health check (within ~4 s)
+3. All traffic routes to the promoted node — no application changes needed
+4. When the old primary recovers, Sentinel re-attaches it as a replica
+
+### PostgreSQL — streaming replication
+
+`db-primary` streams WAL to two replicas. Reads are distributed round-robin across both replicas via `db-read-lb`. Writes always go to the primary. Replica lag is near-zero under normal load.
+
+### Web & API — horizontal scaling
+
+`app-lb` (nginx) distributes HTTP requests round-robin across two instances of each service. Both tiers are stateless:
+
+- **Web (Next.js):** browser-side API calls load-balance via `app-lb:3001`; server-side calls go directly to `api`
+- **API (NestJS):** sessions stored in Redis, so any instance handles any request
+
+---
+
+## Development notes
+
+In `--dev` mode (`docker-compose.dev.yml` overlay):
+
+- Source directories are mounted as volumes — changes take effect without rebuild
+- `web` and `web-2` run with `Dockerfile.dev` (Next.js dev server with hot reload)
+- `api` and `api-2` run with `Dockerfile.dev` (NestJS with watch mode)
+- PostgreSQL has verbose query logging enabled (`log_statement=all`)
+
+---
+
+## Environment variables (API)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | `postgresql://...@db-primary:5432/groundzero` | Write connection |
+| `DATABASE_REPLICA_URL` | `postgresql://...@db-read-lb:5432/groundzero` | Read connection |
+| `REDIS_URL` | `redis://redis-lb:6379` | Redis via load balancer |
+| `MINIO_ENDPOINT` | `http://minio:9000` | Object storage |
+| `SESSION_SECRET` | `change-me-in-production` | **Change before deploying** |
+| `CORS_ORIGIN` | `http://localhost:3000` | Allowed CORS origin |
