@@ -14,15 +14,18 @@ import StorageIcon from "@mui/icons-material/Storage";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
+import ArticleIcon from "@mui/icons-material/Article";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import LoginDialog from "./LoginDialog";
+import ReadmeDrawer from "./ReadmeDrawer";
 
 export default function TopBar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [readmeOpen, setReadmeOpen] = useState(false);
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "";
 
@@ -61,6 +64,11 @@ export default function TopBar() {
           </Button>
 
           <Stack direction="row" spacing={1} sx={{ ml: "auto", display: { xs: "none", sm: "flex" }, alignItems: "center" }}>
+            <Tooltip title="README">
+              <IconButton size="small" onClick={() => setReadmeOpen(true)} sx={{ color: "text.secondary" }}>
+                <ArticleIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             {["Next.js 16", "NestJS", "PostgreSQL", "Prisma 7"].map((label) => (
               <Chip
                 key={label}
@@ -94,6 +102,7 @@ export default function TopBar() {
       </AppBar>
 
       <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
+      <ReadmeDrawer open={readmeOpen} onClose={() => setReadmeOpen(false)} />
     </>
   );
 }
