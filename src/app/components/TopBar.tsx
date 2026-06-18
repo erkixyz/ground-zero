@@ -168,8 +168,10 @@ export default function TopBar() {
                     <ListItemText
                       primary={item.label}
                       secondary={item.hint}
-                      primaryTypographyProps={{ fontSize: 14 }}
-                      secondaryTypographyProps={{ fontSize: 11 }}
+                      slotProps={{
+                        primary: { sx: { fontSize: 14 } },
+                        secondary: { sx: { fontSize: 11 } },
+                      }}
                     />
                   </ListItemButton>
                 ))}
