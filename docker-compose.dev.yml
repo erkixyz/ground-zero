@@ -51,6 +51,7 @@ services:
     volumes:
       - ./backend:/app
       - api_node_modules:/app/node_modules
+      - api_dist:/app/dist
 
   api-2:
     build:
@@ -61,6 +62,7 @@ services:
     volumes:
       - ./backend:/app
       - api_2_node_modules:/app/node_modules
+      - api_2_dist:/app/dist
 
 volumes:
   web_node_modules:
@@ -69,3 +71,5 @@ volumes:
   web_2_next:
   api_node_modules:
   api_2_node_modules:
+  api_dist:
+  api_2_dist:

@@ -7,7 +7,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo Käivitan ARENDUS-režiimis...
+echo Kaivitan ARENDUS-reziimis...
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 echo.
@@ -15,12 +15,12 @@ echo Kontrollin konteinereid...
 
 :check_loop
 set CREATED_COUNT=0
-for /f "tokens=*" %%C in ('docker compose ps --all --format "{{.Name}} {{.State}}" 2^>nul') do (
+for /f "tokens=*" %%C in ('docker compose -f docker-compose.yml -f docker-compose.dev.yml ps --all --format "{{.Name}} {{.State}}" 2^>nul') do (
   echo %%C | findstr /i " created" > nul
   if not errorlevel 1 (
     set /a CREATED_COUNT+=1
     for /f "tokens=1" %%N in ("%%C") do (
-      echo   Käivitan konteineri: %%N
+      echo   Kaivitan konteineri: %%N
       docker start %%N > nul 2>&1
     )
   )
@@ -32,7 +32,7 @@ if %CREATED_COUNT% GTR 0 (
 )
 
 echo.
-echo Teenused on käivitatud:
+echo Teenused on kaivitatud:
 echo   Frontend :  http://localhost:3000  (load balancer -^> web + web-2)
 echo   API      :  http://localhost:3001  (load balancer -^> api + api-2)
 echo   MinIO    :  http://localhost:9001
