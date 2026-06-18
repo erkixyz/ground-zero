@@ -7,5 +7,5 @@ if errorlevel 1 (
 )
 
 echo Peatan Ground Zero teenused...
-docker compose down
-echo Kõik teenused peatatud.
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
+echo Koik teenused peatatud.

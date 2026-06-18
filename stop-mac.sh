@@ -7,5 +7,5 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 echo "Peatan Ground Zero teenused..."
-docker compose down
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
 echo "Kõik teenused peatatud."

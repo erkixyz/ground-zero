@@ -33,12 +33,16 @@ if %CREATED_COUNT% GTR 0 (
 
 echo.
 echo Teenused on kaivitatud:
-echo   Frontend :  http://localhost:3000  (load balancer -^> web + web-2)
-echo   API      :  http://localhost:3001  (load balancer -^> api + api-2)
-echo   MinIO    :  http://localhost:9001
-echo   Nginx LB :  http://localhost:8080/nginx-status
-echo   HAProxy  :  http://localhost:8404  (postgres read LB)
-echo   Redis LB :  http://localhost:8405  (redis LB stats)
+echo   Frontend  :  http://localhost:3000  (load balancer -^> web + web-2)
+echo   API       :  http://localhost:3001  (load balancer -^> api + api-2)
+echo   MinIO     :  http://localhost:9001
+echo   RabbitMQ  :  http://localhost:15672  (guest/guest)
+echo   Nginx LB  :  http://localhost:8080/nginx-status
+echo   HAProxy   :  http://localhost:8404  (postgres read LB)
+echo   Redis LB  :  http://localhost:8405  (redis LB stats)
+echo   Prometheus:  http://localhost:9090
+echo   Grafana   :  http://localhost:3002  (admin/admin)
+echo   Loki      :  http://localhost:3100
 echo.
 echo Logide vaatamiseks: docker compose logs -f
 
