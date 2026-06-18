@@ -41,6 +41,7 @@ async function bootstrap() {
     .setTitle('Ground Zero API')
     .setDescription('REST API for Ground Zero — notes, users, file uploads and authentication.')
     .setVersion('1.0')
+    .setOpenAPIVersion('3.1.0')
     .addCookieAuth('connect.sid', {
       type: 'apiKey',
       in: 'cookie',
