@@ -2,7 +2,7 @@
 
 Full-stack web application with a highly available, load-balanced container infrastructure.
 
-**Stack:** Next.js (frontend) · NestJS (API) · PostgreSQL · Redis · MinIO
+**Stack:** Next.js (frontend) · NestJS (API) · PostgreSQL · Redis · MinIO · RabbitMQ
 
 ---
 
@@ -37,6 +37,13 @@ Full-stack web application with a highly available, load-balanced container infr
         │  │   :3000    │  │             │  │   :3001    │  │
         │  └────────────┘  │             │  └────────────┘  │
         └──────────────────┘             └────────┬─────────┘
+                                                  │
+                                   ┌──────────────┴──────────────┐
+                                   │       RabbitMQ fanout        │
+                                   │   exchange: notes_events     │
+                                   │   :5672  mgmt → :15672       │
+                                   │  api ◄──────────────► api-2  │
+                                   └──────────────┬──────────────┘
                                                   │
                           ┌───────────────────────┼──────────────────────┐
                           │                       │                      │
@@ -93,6 +100,7 @@ Full-stack web application with a highly available, load-balanced container infr
 | `web-2` | ground-zero-web | Next.js frontend (instance 2) | — |
 | `api` | ground-zero-api | NestJS API (instance 1) | — |
 | `api-2` | ground-zero-api | NestJS API (instance 2) | — |
+| `rabbitmq` | rabbitmq:3-management-alpine | Message broker (fanout exchange) | 5672, 15672 |
 | `redis-lb` | haproxy:3.0 | Redis active/passive LB | 6379, 8405 |
 | `redis-primary` | redis:7 | Redis master (R/W) | — |
 | `redis-replica` | redis:7 | Redis replica (R only) | — |
@@ -110,17 +118,17 @@ Full-stack web application with a highly available, load-balanced container infr
 ## Startup order
 
 ```text
-redis-primary  db-primary  minio-1  minio-2
-      │              │          └────┘
-      ▼              ▼          minio-lb
-redis-replica   db-secondary
-      │         db-secondary-2
-      ▼              │
-redis-sentinel ×3    ▼
-      │          db-read-lb
-      ▼              │
-  redis-lb           │
-      └──────┬────────┴──────┬
+redis-primary  db-primary  minio-1  minio-2  rabbitmq
+      │              │          └────┘           │
+      ▼              ▼          minio-lb          │
+redis-replica   db-secondary                     │
+      │         db-secondary-2                   │
+      ▼              │                           │
+redis-sentinel ×3    ▼                           │
+      │          db-read-lb                      │
+      ▼              │                           │
+  redis-lb           │                           │
+      └──────┬────────┴──────┬────────────────────┘
              ▼             minio-lb
           api  api-2
              │
@@ -148,6 +156,7 @@ redis-sentinel ×3    ▼
 | `localhost:5434` | PostgreSQL replica 2 |
 | `localhost:5435` | PostgreSQL reads via LB |
 | `localhost:6379` | Redis via LB |
+| <http://localhost:15672> | RabbitMQ Management UI (guest/guest) |
 
 ---
 
@@ -217,6 +226,10 @@ Two MinIO nodes run in distributed mode with 2 drives each (4 drives total), sat
 - **Web (Next.js):** browser-side API calls load-balance via `app-lb:3001`; server-side calls go directly to `api`
 - **API (NestJS):** sessions stored in Redis, so any instance handles any request
 
+### WebSocket & RabbitMQ
+
+Both API instances subscribe to the `notes_events` fanout exchange on startup (each with its own exclusive, auto-delete queue). When any instance publishes a `notes:changed` event (e.g. after creating or deleting a note or file), RabbitMQ delivers the message to every subscriber. Each instance then broadcasts `notes:changed` to its own connected WebSocket clients — ensuring all browser clients receive real-time updates regardless of which API instance handled the mutation.
+
 ---
 
 ## Development notes
@@ -240,3 +253,4 @@ In `--dev` mode (`docker-compose.dev.yml` overlay):
 | `MINIO_ENDPOINT` | `http://minio-lb:9000` | Object storage (via LB) |
 | `SESSION_SECRET` | `change-me-in-production` | **Change before deploying** |
 | `CORS_ORIGIN` | `http://localhost:3000` | Allowed CORS origin |
+| `RABBITMQ_URL` | `amqp://guest:guest@rabbitmq:5672` | RabbitMQ connection URL |

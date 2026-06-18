@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
-import { EventsGateway } from "../events/events.gateway";
+import { MessagingService } from "../messaging/messaging.service";
 
 @Injectable()
 export class FilesService {
@@ -11,7 +11,7 @@ export class FilesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
-    private readonly events: EventsGateway,
+    private readonly messaging: MessagingService,
   ) {}
 
   async upload(noteId: number, file: Express.Multer.File) {
@@ -33,7 +33,7 @@ export class FilesService {
       },
     });
     this.logger.log(`Fail salvestatud: id=${record.id}, noteId=${noteId}`);
-    this.events.notesChanged();
+    this.messaging.publish("notes:changed");
     return record;
   }
 
@@ -47,7 +47,7 @@ export class FilesService {
     await this.storage.delete(file.key);
     await this.prisma.write.noteFile.delete({ where: { id: fileId } });
     this.logger.log(`Fail kustutatud: id=${fileId}`);
-    this.events.notesChanged();
+    this.messaging.publish("notes:changed");
   }
 
   async removeAllForNote(noteId: number) {

@@ -65,6 +65,22 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
   api:
     build:
       context: ./backend
@@ -81,6 +97,7 @@ services:
       - REDIS_URL=redis://redis-lb:6379
       - SESSION_SECRET=change-me-in-production
       - CORS_ORIGIN=http://localhost:3000
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
       db-primary:
         condition: service_healthy
@@ -89,6 +106,8 @@ services:
       minio-lb:
         condition: service_healthy
       redis-lb:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/hello || exit 1"]
@@ -113,6 +132,7 @@ services:
       - REDIS_URL=redis://redis-lb:6379
       - SESSION_SECRET=change-me-in-production
       - CORS_ORIGIN=http://localhost:3000
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
       db-primary:
         condition: service_healthy
@@ -121,6 +141,8 @@ services:
       minio-lb:
         condition: service_healthy
       redis-lb:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/hello || exit 1"]

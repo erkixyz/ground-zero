@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { FilesService } from "../files/files.service";
-import { EventsGateway } from "../events/events.gateway";
+import { MessagingService } from "../messaging/messaging.service";
 
 @Injectable()
 export class NotesService {
@@ -10,7 +10,7 @@ export class NotesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly files: FilesService,
-    private readonly events: EventsGateway,
+    private readonly messaging: MessagingService,
   ) {}
 
   async findAll() {
@@ -36,7 +36,7 @@ export class NotesService {
       data: { title, content, category: category || null, pinned: pinned ?? false, authorId: authorId ?? null },
     });
     this.logger.log(`Märge loodud: id=${note.id}`);
-    this.events.notesChanged();
+    this.messaging.publish("notes:changed");
     return note;
   }
 
@@ -45,6 +45,6 @@ export class NotesService {
     await this.files.removeAllForNote(id);
     await this.prisma.write.note.delete({ where: { id } });
     this.logger.log(`Märge kustutatud: id=${id}`);
-    this.events.notesChanged();
+    this.messaging.publish("notes:changed");
   }
 }
