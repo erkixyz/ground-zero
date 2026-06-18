@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { NestExpressApplication } from "@nestjs/platform-express";
+import { ValidationPipe } from "@nestjs/common";
 import * as session from "express-session";
 import { createClient } from "redis";
 import { RedisStore } from "connect-redis";
@@ -68,6 +69,12 @@ async function bootstrap() {
     res.set('Content-Type', metricsRegistry.contentType);
     res.end(await metricsRegistry.metrics());
   });
+
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
 
   app.setGlobalPrefix("api");
   app.enableCors({

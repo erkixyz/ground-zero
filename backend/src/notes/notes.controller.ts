@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -36,15 +35,9 @@ export class NotesController {
   @ApiResponse({ status: 400, description: 'title and content are required' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @Body() body: { title: string; content: string; category?: string; pinned?: boolean },
-    @Req() req: Request & { session: any },
-  ) {
-    if (!body.title?.trim() || !body.content?.trim()) {
-      throw new BadRequestException("title ja content on kohustuslikud");
-    }
+  create(@Body() dto: CreateNoteDto, @Req() req: Request & { session: any }) {
     const authorId: number | undefined = req.session?.userId ?? undefined;
-    return this.notesService.create(body.title.trim(), body.content.trim(), body.category, body.pinned, authorId);
+    return this.notesService.create(dto.title.trim(), dto.content.trim(), dto.category, dto.pinned, authorId);
   }
 
   @ApiOperation({ summary: 'Delete note' })

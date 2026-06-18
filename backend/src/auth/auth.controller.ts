@@ -26,12 +26,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged in successfully', type: UserEntity })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @Post("login")
-  async login(@Body() body: { email: string; password: string }, @Req() req: SessionReq) {
-    if (!body.email || !body.password) {
-      throw new UnauthorizedException("E-post ja parool on kohustuslikud");
-    }
-
-    const user = await this.authService.validateUser(body.email, body.password);
+  async login(@Body() dto: LoginDto, @Req() req: SessionReq) {
+    const user = await this.authService.validateUser(dto.email, dto.password);
     if (!user) throw new UnauthorizedException("Vale e-post või parool");
 
     req.session.userId = user.id;
