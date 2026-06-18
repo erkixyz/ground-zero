@@ -30,7 +30,12 @@ export default function ReadmeDialog({ open, onClose }: Props) {
   }, [open, content]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullScreen>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={false}
+      slotProps={{ paper: { sx: { width: "95vw", height: "95vh" } } }}
+    >
       <DialogTitle sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
         README
         <IconButton onClick={onClose} size="small" sx={{ ml: "auto" }}>
