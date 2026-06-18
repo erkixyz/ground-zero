@@ -204,6 +204,36 @@ docker compose logs -f app-lb        # nginx LB
 
 ---
 
+## Testing
+
+End-to-end tests run with [Playwright](https://playwright.dev) against the running Docker stack (`http://localhost:3000`).
+
+### Käivitamine
+
+| Käsk | Kirjeldus |
+| --- | --- |
+| `npm test` | Jookseb kõik testid terminalis, genereerib HTML raporti |
+| `npm run test:ui` | Interaktiivne Playwright UI aken (testi valimine, trace, screenshots) |
+| `npm run test:report` | Jookseb testid + avab HTML raporti brauseris (`localhost:9323`) |
+| `npx playwright show-report` | Avab viimase raporti brauseris ilma teste uuesti jooksutamata |
+
+### Testide struktuur
+
+```text
+tests/
+  helpers.ts          # API abifunktsioonid (createTestNote, createTestUser, …)
+  home.spec.ts        # Avaleht — märkmete CRUD, kategooria, pinnitud
+  navigation.spec.ts  # TopBar, navigatsioon, hamburgermenüü, README drawer
+  auth.spec.ts        # Login/logout, vale parool, dialoog
+  users.spec.ts       # Kasutajate haldus, kustutamise kinnitamine
+```
+
+### Eeldused
+
+Docker stack peab olema käivitatud (`start-win.bat` / `start-mac.sh`) enne testide jooksutamist. Testid loovad ja koristasid testikasutaja (`playwright@test.local`) automaatselt `beforeAll`/`afterAll` haakides.
+
+---
+
 ## High Availability
 
 ### Redis — Sentinel failover
