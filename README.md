@@ -137,6 +137,7 @@ redis-sentinel ×3    ▼
 | --- | --- |
 | <http://localhost:3000> | Frontend (via nginx LB) |
 | <http://localhost:3001> | API (via nginx LB) |
+| <http://localhost:3001/docs> | Interactive API docs (Swagger UI) |
 | <http://localhost:8080/nginx-status> | nginx load balancer stats |
 | <http://localhost:8404> | HAProxy stats — PostgreSQL read LB |
 | <http://localhost:8405> | HAProxy stats — Redis LB |

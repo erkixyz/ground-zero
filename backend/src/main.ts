@@ -5,6 +5,7 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import * as session from "express-session";
 import { createClient } from "redis";
 import { RedisStore } from "connect-redis";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -35,6 +36,34 @@ async function bootstrap() {
     credentials: true,
   });
   app.useWebSocketAdapter(new IoAdapter(app));
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Ground Zero API')
+    .setDescription('REST API for Ground Zero — notes, users, file uploads and authentication.')
+    .setVersion('1.0')
+    .addCookieAuth('connect.sid', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'connect.sid',
+      description: 'Session cookie — login via POST /api/auth/login to set it automatically',
+    })
+    .addTag('health', 'Service health check')
+    .addTag('auth', 'Session-based authentication')
+    .addTag('users', 'User management')
+    .addTag('notes', 'Notes CRUD')
+    .addTag('files', 'Note file attachments')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      tagsSorter: 'alpha',
+      operationsSorter: 'alpha',
+    },
+    customSiteTitle: 'Ground Zero API Docs',
+  });
+
   await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();
