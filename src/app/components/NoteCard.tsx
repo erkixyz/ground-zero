@@ -8,6 +8,7 @@ import Box from "@mui/material/Box";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import DeleteButton from "./DeleteButton";
+import SendNoteButton from "./SendNoteButton";
 import NoteFileChip from "./NoteFileChip";
 
 type NoteFile = {
@@ -93,6 +94,7 @@ export default function NoteCard({ note }: { note: Note }) {
               ))}
             </Box>
           </Box>
+          <SendNoteButton noteId={note.id} />
           <DeleteButton id={note.id} />
         </Box>
       </CardContent>

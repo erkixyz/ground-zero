@@ -14,6 +14,7 @@ import { Request } from "express";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiCookieAuth } from "@nestjs/swagger";
 import { NotesService } from "./notes.service";
 import { CreateNoteDto } from "./dto/create-note.dto";
+import { SendNoteDto } from "./dto/send-note.dto";
 import { NoteEntity } from "./entities/note.entity";
 
 @ApiTags('notes')
@@ -38,6 +39,17 @@ export class NotesController {
   create(@Body() dto: CreateNoteDto, @Req() req: Request & { session: any }) {
     const authorId: number | undefined = req.session?.userId ?? undefined;
     return this.notesService.create(dto.title.trim(), dto.content.trim(), dto.category, dto.pinned, authorId);
+  }
+
+  @ApiOperation({ summary: 'Send note by email', description: 'Sends note content and attachments to the given email address.' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: SendNoteDto })
+  @ApiResponse({ status: 204, description: 'Sent' })
+  @ApiResponse({ status: 404, description: 'Note not found' })
+  @Post(":id/send")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async sendByEmail(@Param("id", ParseIntPipe) id: number, @Body() dto: SendNoteDto) {
+    await this.notesService.sendByEmail(id, dto.email);
   }
 
   @ApiOperation({ summary: 'Delete note' })

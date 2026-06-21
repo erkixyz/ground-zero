@@ -11,9 +11,11 @@ import { NotesModule } from "./notes/notes.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { HttpLoggingInterceptor } from "./logging/http-logging.interceptor";
+import { MailModule } from "./mail/mail.module";
 
 @Module({
   imports: [
+    MailModule,
     WinstonModule.forRoot({
       level: process.env.NODE_ENV === "production" ? "info" : "debug",
       transports: [

@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { randomBytes, scryptSync } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { MailService } from "../mail/mail.service";
 
 const userSelect = {
   id: true,
@@ -12,7 +13,10 @@ const userSelect = {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   private hashPassword(password: string): string {
     const salt = randomBytes(16).toString("hex");
@@ -31,10 +35,12 @@ export class UsersService {
     const existing = await this.prisma.write.user.findUnique({ where: { email: data.email } });
     if (existing) throw new ConflictException("Selle e-postiga kasutaja on juba olemas");
 
-    return this.prisma.write.user.create({
+    const user = await this.prisma.write.user.create({
       data: { ...data, password: this.hashPassword(data.password) },
       select: userSelect,
     });
+    void this.mail.sendWelcome({ firstName: user.firstName, email: user.email });
+    return user;
   }
 
   async update(id: number, data: { firstName?: string; lastName?: string; email?: string; password?: string }) {

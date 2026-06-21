@@ -59,3 +59,20 @@ export async function deleteNoteFile(noteId: number, fileId: number) {
   });
   revalidatePath("/");
 }
+
+export async function sendNote(noteId: number, email: string): Promise<{ error: string } | null> {
+  try {
+    const res = await fetch(`${process.env.API_URL}/api/notes/${noteId}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { error: data.message ?? `Saatmine ebaõnnestus (${res.status})` };
+    }
+    return null;
+  } catch {
+    return { error: "API ei vasta — kontrolli ühendust" };
+  }
+}
