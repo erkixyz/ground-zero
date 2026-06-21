@@ -16,8 +16,32 @@ async function bootstrap() {
 
   const expressApp = app.getHttpAdapter().getInstance();
 
-  // Mount Better Auth before NestJS routing — handles all /api/auth/* requests
-  expressApp.all("/api/auth/*", toNodeHandler(auth));
+  // Mount Better Auth before NestJS routing.
+  // Express 5 dropped the * wildcard in route paths, so we use a middleware.
+  // Better Auth uses trustedOrigins for anti-CSRF validation, not for CORS headers,
+  // so we set CORS headers manually here for all /api/auth/* requests.
+  const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3000";
+  expressApp.use((req: any, res: any, next: any) => {
+    if (!req.path?.startsWith('/api/auth')) return next();
+
+    const origin = req.headers.origin as string | undefined;
+    if (origin === corsOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Vary', 'Origin');
+    }
+
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Access-Control-Max-Age', '86400');
+      res.statusCode = 204;
+      res.end();
+      return;
+    }
+
+    return toNodeHandler(auth)(req, res);
+  });
 
   // Prometheus metrics
   const metricsRegistry = new Registry();
