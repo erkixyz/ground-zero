@@ -12,6 +12,7 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import { useAuth } from "./AuthProvider";
+import { authClient } from "../auth-client";
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -52,17 +53,15 @@ export default function LoginDialog({ open, onClose }: Props) {
     if (!email) return;
     setPending(true);
     setError(null);
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+    const { error: err } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setPending(false);
+    if (err) {
+      setError((err as { message?: string }).message ?? "Viga päringu saatmisel");
+    } else {
       setSuccess("Kui e-post on registreeritud, saatisime parooli lähtestamise lingi.");
-    } catch {
-      setError("Viga päringu saatmisel");
-    } finally {
-      setPending(false);
     }
   };
 

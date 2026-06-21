@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { randomBytes, scryptSync } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
+import { hashPassword } from "../auth/better-auth";
 
 const userSelect = {
   id: true,
@@ -18,12 +18,6 @@ export class UsersService {
     private readonly mail: MailService,
   ) {}
 
-  private hashPassword(password: string): string {
-    const salt = randomBytes(16).toString("hex");
-    const hash = scryptSync(password, salt, 64).toString("hex");
-    return `${salt}:${hash}`;
-  }
-
   findAll() {
     return this.prisma.read.user.findMany({
       orderBy: { createdAt: "desc" },
@@ -35,15 +29,32 @@ export class UsersService {
     const existing = await this.prisma.write.user.findUnique({ where: { email: data.email } });
     if (existing) throw new ConflictException("Selle e-postiga kasutaja on juba olemas");
 
+    const hashedPw = hashPassword(data.password);
+    const name = `${data.firstName} ${data.lastName}`.trim();
+
     const user = await this.prisma.write.user.create({
-      data: { ...data, password: this.hashPassword(data.password) },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        name,
+        email: data.email,
+        emailVerified: true,
+        accounts: {
+          create: {
+            accountId: data.email,
+            providerId: "credential",
+            password: hashedPw,
+          },
+        },
+      },
       select: userSelect,
     });
+
     void this.mail.sendWelcome({ firstName: user.firstName, email: user.email });
     return user;
   }
 
-  async update(id: number, data: { firstName?: string; lastName?: string; email?: string; password?: string }) {
+  async update(id: string, data: { firstName?: string; lastName?: string; email?: string; password?: string }) {
     const user = await this.prisma.write.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
 
@@ -51,16 +62,29 @@ export class UsersService {
     if (data.firstName) updateData.firstName = data.firstName;
     if (data.lastName) updateData.lastName = data.lastName;
     if (data.email) updateData.email = data.email;
-    if (data.password) updateData.password = this.hashPassword(data.password);
 
-    return this.prisma.write.user.update({
+    if (data.firstName || data.lastName) {
+      updateData.name = `${data.firstName ?? user.firstName} ${data.lastName ?? user.lastName}`.trim();
+    }
+
+    const updated = await this.prisma.write.user.update({
       where: { id },
       data: updateData,
       select: userSelect,
     });
+
+    if (data.password) {
+      const hashedPw = hashPassword(data.password);
+      await this.prisma.write.account.updateMany({
+        where: { userId: id, providerId: "credential" },
+        data: { password: hashedPw },
+      });
+    }
+
+    return updated;
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const user = await this.prisma.write.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
     await this.prisma.write.user.delete({ where: { id } });

@@ -41,7 +41,7 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
   return { ok: true };
 }
 
-export async function updateUser(id: number, _prev: UserFormState, formData: FormData): Promise<UserFormState> {
+export async function updateUser(id: string, _prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const firstName = (formData.get("firstName") as string)?.trim();
   const lastName = (formData.get("lastName") as string)?.trim();
   const email = (formData.get("email") as string)?.trim();
@@ -71,7 +71,7 @@ export async function updateUser(id: number, _prev: UserFormState, formData: For
   return { ok: true };
 }
 
-export async function deleteUser(id: number) {
+export async function deleteUser(id: string) {
   const cookie = await forwardCookie();
   await fetch(`${process.env.API_URL}/api/users/${id}`, {
     method: "DELETE",

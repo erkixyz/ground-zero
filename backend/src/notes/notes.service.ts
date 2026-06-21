@@ -34,7 +34,7 @@ export class NotesService {
     );
   }
 
-  async create(title: string, content: string, category?: string, pinned?: boolean, authorId?: number) {
+  async create(title: string, content: string, category?: string, pinned?: boolean, authorId?: string) {
     this.logger.log(`Loon märget: "${title}" [kategooria=${category ?? "—"}, tähtsustatud=${pinned ?? false}, autor=${authorId ?? "anonüümne"}]`);
     const note = await this.prisma.write.note.create({
       data: { title, content, category: category || null, pinned: pinned ?? false, authorId: authorId ?? null },

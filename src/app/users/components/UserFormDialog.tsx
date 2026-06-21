@@ -13,7 +13,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { createUser, updateUser, UserFormState } from "../actions";
 
 export type UserRow = {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   email: string;

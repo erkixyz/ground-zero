@@ -12,6 +12,8 @@ import {
 } from "@nestjs/common";
 import { Request } from "express";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiCookieAuth } from "@nestjs/swagger";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../auth/better-auth";
 import { NotesService } from "./notes.service";
 import { CreateNoteDto } from "./dto/create-note.dto";
 import { SendNoteDto } from "./dto/send-note.dto";
@@ -36,8 +38,9 @@ export class NotesController {
   @ApiResponse({ status: 400, description: 'title and content are required' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateNoteDto, @Req() req: Request & { session: any }) {
-    const authorId: number | undefined = req.session?.userId ?? undefined;
+  async create(@Body() dto: CreateNoteDto, @Req() req: Request) {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    const authorId: string | undefined = session?.user?.id ?? undefined;
     return this.notesService.create(dto.title.trim(), dto.content.trim(), dto.category, dto.pinned, authorId);
   }
 

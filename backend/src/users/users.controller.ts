@@ -7,13 +7,14 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Req,
 } from "@nestjs/common";
 import { Request } from "express";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../auth/better-auth";
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -48,12 +49,12 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: 'Update user' })
-  @ApiParam({ name: 'id', type: Number })
+  @ApiParam({ name: 'id', type: String })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, type: UserEntity })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Patch(":id")
-  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
+  update(@Param("id") id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, {
       firstName: dto.firstName?.trim() || undefined,
       lastName: dto.lastName?.trim() || undefined,
@@ -63,14 +64,15 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: 'Delete user' })
-  @ApiParam({ name: 'id', type: Number })
+  @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 204, description: 'Deleted' })
   @ApiResponse({ status: 403, description: 'Cannot delete self' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param("id", ParseIntPipe) id: number, @Req() req: Request & { session: any }) {
-    if (req.session?.userId === id) {
+  async remove(@Param("id") id: string, @Req() req: Request) {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    if (session?.user?.id === id) {
       throw new ForbiddenException("Ei saa iseennast kustutada");
     }
     await this.usersService.remove(id);

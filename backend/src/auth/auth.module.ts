@@ -1,9 +1,5 @@
 import { Module } from "@nestjs/common";
-import { AuthController } from "./auth.controller";
-import { AuthService } from "./auth.service";
 
-@Module({
-  controllers: [AuthController],
-  providers: [AuthService],
-})
+// Auth is handled by Better Auth middleware in main.ts (mounted at /api/auth/*)
+@Module({})
 export class AuthModule {}

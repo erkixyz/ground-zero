@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import { authClient } from "../auth-client";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -35,21 +36,12 @@ function ResetPasswordForm() {
     }
     setError(null);
     startTransition(async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, newPassword: password }),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.message ?? "Parooli muutmine ebaõnnestus");
-        } else {
-          setSuccess(true);
-          setTimeout(() => router.push("/"), 2500);
-        }
-      } catch {
-        setError("Viga päringu saatmisel");
+      const { error: err } = await authClient.resetPassword({ newPassword: password, token });
+      if (err) {
+        setError((err as { message?: string }).message ?? "Parooli muutmine ebaõnnestus");
+      } else {
+        setSuccess(true);
+        setTimeout(() => router.push("/"), 2500);
       }
     });
   };

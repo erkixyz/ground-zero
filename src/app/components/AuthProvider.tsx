@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { authClient } from "../auth-client";
 
-type User = { id: number; firstName: string; lastName: string; email: string };
+type User = { id: string; firstName: string; lastName: string; email: string };
 
 type AuthContextType = {
   user: User | null;
@@ -18,43 +19,36 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => undefined,
 });
 
+function toUser(u: { id: string; name: string; email: string; [key: string]: unknown } | undefined | null): User | null {
+  if (!u) return null;
+  return {
+    id: u.id,
+    firstName: (u.firstName as string) || u.name.split(" ")[0] || "",
+    lastName: (u.lastName as string) || u.name.split(" ").slice(1).join(" ") || "",
+    email: u.email,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u) => setUser(u))
+    authClient.getSession()
+      .then(({ data }) => setUser(toUser(data?.user)))
       .catch(() => undefined)
       .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<string | null> => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        return data.message ?? "Sisselogimine ebaõnnestus";
-      }
-      const u = await res.json();
-      setUser(u);
-      return null;
-    } catch {
-      return "Ei saa API-ga ühendust";
-    }
+    const { data, error } = await authClient.signIn.email({ email, password });
+    if (error) return (error as { message?: string }).message ?? "Sisselogimine ebaõnnestus";
+    setUser(toUser(data?.user));
+    return null;
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    }).catch(() => undefined);
+    await authClient.signOut();
     setUser(null);
   }, []);
 
