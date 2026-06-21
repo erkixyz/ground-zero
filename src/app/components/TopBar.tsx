@@ -117,8 +117,21 @@ export default function TopBar() {
 
             {user ? (
               <>
-                <Tooltip title={`${user.firstName} ${user.lastName} · ${user.email}`}>
-                  <Avatar sx={{ width: 30, height: 30, fontSize: 12, bgcolor: "primary.dark", cursor: "default" }}>
+                <Tooltip title={`Profiil · ${user.firstName} ${user.lastName}`}>
+                  <Avatar
+                    component={Link}
+                    href="/profile"
+                    sx={{
+                      width: 30,
+                      height: 30,
+                      fontSize: 12,
+                      bgcolor: pathname === "/profile" ? "primary.main" : "primary.dark",
+                      cursor: "pointer",
+                      textDecoration: "none",
+                      transition: "opacity 0.15s",
+                      "&:hover": { opacity: 0.85 },
+                    }}
+                  >
                     {initials}
                   </Avatar>
                 </Tooltip>
