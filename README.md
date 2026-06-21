@@ -100,11 +100,11 @@ Full-stack web application with a highly available, load-balanced container infr
 | `web-2` | ground-zero-web | Next.js frontend (instance 2) | — |
 | `api` | ground-zero-api | NestJS API (instance 1) | — |
 | `api-2` | ground-zero-api | NestJS API (instance 2) | — |
-| `rabbitmq` | rabbitmq:3-management-alpine | Message broker (fanout exchange) | 5672, 15672 |
+| `rabbitmq` | rabbitmq:4-management-alpine | Message broker (fanout exchange) | 5672, 15672 |
 | `redis-lb` | haproxy:3.0 | Redis active/passive LB | 6379, 8405 |
-| `redis-primary` | redis:7 | Redis master (R/W) | — |
-| `redis-replica` | redis:7 | Redis replica (R only) | — |
-| `redis-sentinel-1/2/3` | redis:7 | Sentinel, quorum 2/3 | — |
+| `redis-primary` | redis:8-alpine | Redis master (R/W) | — |
+| `redis-replica` | redis:8-alpine | Redis replica (R only) | — |
+| `redis-sentinel-1/2/3` | redis:8-alpine | Sentinel, quorum 2/3 | — |
 | `db-primary` | postgres:17 | PostgreSQL primary (writes) | 5432 |
 | `db-secondary` | postgres:17 | PostgreSQL replica 1 (reads) | 5433 |
 | `db-secondary-2` | postgres:17 | PostgreSQL replica 2 (reads) | 5434 |
@@ -266,7 +266,17 @@ Two MinIO nodes run in distributed mode with 2 drives each (4 drives total), sat
 
 ### WebSocket & RabbitMQ
 
-Both API instances subscribe to the `notes_events` fanout exchange on startup (each with its own exclusive, auto-delete queue). When any instance publishes a `notes:changed` event (e.g. after creating or deleting a note or file), RabbitMQ delivers the message to every subscriber. Each instance then broadcasts `notes:changed` to its own connected WebSocket clients — ensuring all browser clients receive real-time updates regardless of which API instance handled the mutation.
+Both API instances subscribe to the `notes_events` fanout exchange on startup (each with its own exclusive, auto-delete queue). When any instance publishes an event, RabbitMQ delivers the message to every subscriber. Each instance then broadcasts the event to its own connected WebSocket clients — ensuring all browser clients receive real-time updates regardless of which API instance handled the mutation.
+
+**Event types** (JSON payload published to the fanout exchange):
+
+| `type` | Payload | Browser effect |
+| --- | --- | --- |
+| *(any non-JSON / legacy)* | raw string | `notes:changed` → page refresh |
+| `notes:changed` | `{ type }` | page refresh |
+| `toast` | `{ type, message, severity }` | MUI Snackbar toast |
+
+Toasts can also be pushed directly without RabbitMQ by calling `EventsGateway.notifyToast()` on any API instance — this reaches only the clients connected to that instance. For cross-instance broadcast use `MessagingService.publish()`.
 
 ### Observability — Prometheus & Grafana
 
@@ -283,6 +293,69 @@ Every service exposes metrics which Prometheus scrapes every 15 seconds and reta
 | `nginx-exporter` | nginx active connections, request rate | `nginx-exporter:9113` |
 
 The NestJS `/metrics` endpoint is a raw Express route registered before the `/api` global prefix, so it is reachable at `http://localhost:3001/metrics` without an `/api` prefix.
+
+---
+
+## Authentication
+
+Authentication is handled by [Better Auth](https://www.better-auth.com) (`v1.6.20`), mounted as Express middleware before NestJS routing at `/api/auth/*`.
+
+**Methods:**
+
+| Method | Description |
+| --- | --- |
+| Email / password | Registration and login via `POST /api/auth/sign-in/email` |
+| Google OAuth | Social sign-in via `GET /api/auth/sign-in/social?provider=google` |
+| Password reset | Email link sent by `POST /api/auth/request-password-reset`; token redeemed at `/reset-password` |
+
+**Google OAuth setup:**
+
+1. Create OAuth 2.0 credentials in [Google Cloud Console](https://console.cloud.google.com)
+2. Add authorized redirect URI: `http://localhost:3001/api/auth/callback/google`
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the root `.env` file (Docker) and/or `backend/.env` (local dev)
+
+Google provider is activated conditionally — if either variable is absent, only email/password is available.
+
+**Sessions** are cookie-based (`gz.session_token`), stored in PostgreSQL via the Prisma adapter. Secure cookies are enabled in production (`NODE_ENV=production`).
+
+---
+
+## Frontend features
+
+### Pages
+
+| Route | Description |
+| --- | --- |
+| `/` | Notes list with create form |
+| `/users` | User management |
+| `/profile` | Authenticated user's profile (read-only) |
+| `/reset-password` | Password reset (token from email) |
+
+### Toast notifications
+
+MUI `Snackbar` + `Alert` toast system via `ToastProvider` context.
+
+**Client-side** (immediate feedback after user actions):
+
+| Action | Toast |
+| --- | --- |
+| Note created | "Märge salvestatud" (success, green) |
+| Note deleted | "Märge kustutatud" (error, red) |
+| File deleted | "Fail kustutatud" (error, red) |
+
+**Server-side push** (via WebSocket, see [WebSocket & RabbitMQ](#websocket--rabbitmq) above):
+
+```typescript
+// Direct (single instance, all its connected clients)
+this.events.notifyToast("Teade", "warning");
+
+// Via RabbitMQ (all instances → all connected clients)
+this.messaging.publish(JSON.stringify({
+  type: "toast",
+  message: "Teade kõigile",
+  severity: "info",   // success | error | info | warning
+}));
+```
 
 ---
 
@@ -308,3 +381,13 @@ In `--dev` mode (`docker-compose.dev.yml` overlay):
 | `SESSION_SECRET` | `change-me-in-production` | **Change before deploying** |
 | `CORS_ORIGIN` | `http://localhost:3000` | Allowed CORS origin |
 | `RABBITMQ_URL` | `amqp://guest:guest@rabbitmq:5672` | RabbitMQ connection URL |
+| `APP_URL` | `http://localhost:3000` | Frontend base URL (used in password reset emails) |
+| `BETTER_AUTH_URL` | *(derived from `APP_URL`)* | Override for Better Auth base URL |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth client ID (optional; enables Google sign-in) |
+| `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
+| `MAIL_HOST` | `localhost` | SMTP server host |
+| `MAIL_PORT` | `1025` | SMTP server port (1025 = MailHog in dev) |
+| `MAIL_SECURE` | `false` | Use TLS (`true`/`false`) |
+| `MAIL_USER` | — | SMTP username (optional) |
+| `MAIL_PASS` | — | SMTP password (optional) |
+| `MAIL_FROM` | `noreply@localhost` | From address for outgoing emails |
