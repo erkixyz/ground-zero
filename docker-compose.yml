@@ -256,6 +256,9 @@ services:
       -c wal_level=replica
       -c max_wal_senders=5
       -c wal_keep_size=64MB
+      -c log_statement=all
+      -c log_min_duration_statement=0
+      -c log_line_prefix='%t [%p] %u@%d '
     ports:
       - "5432:5432"
     volumes:

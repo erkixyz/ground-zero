@@ -3,6 +3,7 @@ import { NestFactory } from "@nestjs/core";
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe } from "@nestjs/common";
+import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 import * as session from "express-session";
 import { createClient } from "redis";
 import { RedisStore } from "connect-redis";
@@ -11,7 +12,8 @@ import { collectDefaultMetrics, Registry, Counter, Histogram } from 'prom-client
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   const redisClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
   redisClient.on("error", (err) => console.error("Redis error:", err));

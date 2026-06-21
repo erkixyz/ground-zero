@@ -1,4 +1,7 @@
 import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR } from "@nestjs/core";
+import { WinstonModule } from "nest-winston";
+import * as winston from "winston";
 import { AppController } from "./app.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { StorageModule } from "./storage/storage.module";
@@ -7,9 +10,33 @@ import { MessagingModule } from "./messaging/messaging.module";
 import { NotesModule } from "./notes/notes.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
+import { HttpLoggingInterceptor } from "./logging/http-logging.interceptor";
 
 @Module({
-  imports: [PrismaModule, StorageModule, EventsModule, MessagingModule, NotesModule, UsersModule, AuthModule],
+  imports: [
+    WinstonModule.forRoot({
+      level: process.env.NODE_ENV === "production" ? "info" : "debug",
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.errors({ stack: true }),
+            winston.format.json(),
+          ),
+        }),
+      ],
+    }),
+    PrismaModule,
+    StorageModule,
+    EventsModule,
+    MessagingModule,
+    NotesModule,
+    UsersModule,
+    AuthModule,
+  ],
   controllers: [AppController],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: HttpLoggingInterceptor },
+  ],
 })
 export class AppModule {}
