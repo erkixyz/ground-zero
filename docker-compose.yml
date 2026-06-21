@@ -104,6 +104,8 @@ services:
       - MAIL_PORT=1025
       - MAIL_FROM=noreply@ground-zero.local
       - APP_URL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     depends_on:
       db-primary:
         condition: service_healthy
@@ -143,6 +145,8 @@ services:
       - MAIL_PORT=1025
       - MAIL_FROM=noreply@ground-zero.local
       - APP_URL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     depends_on:
       db-primary:
         condition: service_healthy
