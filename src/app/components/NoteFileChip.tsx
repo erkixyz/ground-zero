@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import Chip from "@mui/material/Chip";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { deleteNoteFile } from "@/app/actions";
+import { useToast } from "./ToastProvider";
 
 type Props = {
   fileId: number;
@@ -14,6 +15,7 @@ type Props = {
 
 export default function NoteFileChip({ fileId, noteId, filename, url }: Props) {
   const [pending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
   return (
     <Chip
@@ -27,7 +29,12 @@ export default function NoteFileChip({ fileId, noteId, filename, url }: Props) {
       rel="noopener noreferrer"
       clickable
       disabled={pending}
-      onDelete={() => startTransition(() => deleteNoteFile(noteId, fileId))}
+      onDelete={() =>
+        startTransition(async () => {
+          await deleteNoteFile(noteId, fileId);
+          showToast("Fail kustutatud", "error");
+        })
+      }
       sx={{
         maxWidth: 200,
         borderColor: "divider",

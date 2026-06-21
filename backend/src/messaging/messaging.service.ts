@@ -32,7 +32,16 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
     this.consumeChannel.consume(queue, (msg) => {
       if (!msg) return;
       this.consumeChannel.ack(msg);
-      this.events.notesChanged();
+      try {
+        const payload = JSON.parse(msg.content.toString());
+        if (payload.type === "toast") {
+          this.events.notifyToast(payload.message, payload.severity);
+        } else {
+          this.events.notesChanged();
+        }
+      } catch {
+        this.events.notesChanged();
+      }
     });
 
     this.logger.log(`Kuulan järjekorda: ${queue}`);

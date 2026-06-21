@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createNote, type NoteFormState } from "@/app/actions";
+import { useToast } from "./ToastProvider";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -26,6 +27,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 
 export default function NoteForm() {
   const router = useRouter();
+  const { showToast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -45,6 +47,7 @@ export default function NoteForm() {
 
     if (files.length === 0) {
       formRef.current?.reset();
+      showToast("Märge salvestatud");
       router.refresh();
       return;
     }
@@ -60,6 +63,7 @@ export default function NoteForm() {
             { method: "POST", body: fd },
           );
         }
+        showToast("Märge salvestatud");
       } finally {
         setUploading(false);
         setFiles([]);

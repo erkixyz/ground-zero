@@ -22,4 +22,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`notes:changed → ${count} klient(i)`);
     this.server.emit("notes:changed");
   }
+
+  notifyToast(message: string, severity: "success" | "error" | "info" | "warning" = "info") {
+    const count = this.server.sockets.sockets.size;
+    this.logger.log(`toast → ${count} klient(i): [${severity}] ${message}`);
+    this.server.emit("toast", { message, severity });
+  }
 }
