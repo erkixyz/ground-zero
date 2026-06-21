@@ -31,7 +31,7 @@ export default function ProfilePage() {
       <Card>
         <CardContent>
           <Stack spacing={3}>
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Avatar sx={{ width: 56, height: 56, fontSize: 22, bgcolor: "primary.dark" }}>
                 {initials}
               </Avatar>
