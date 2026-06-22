@@ -7,8 +7,10 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import NoteForm from "@/app/components/NoteForm";
 import NoteCard, { type Note } from "@/app/components/NoteCard";
+import { getServerTranslations } from "@/i18n/server";
 
 export default async function Home() {
+  const { t } = await getServerTranslations();
   let notes: Note[] = [];
   let fetchError: string | null = null;
 
@@ -19,7 +21,7 @@ export default async function Home() {
     if (!res.ok) throw new Error(`${res.status}`);
     notes = await res.json();
   } catch (e) {
-    fetchError = `Märkmete laadimine ebaõnnestus — ${e instanceof Error ? e.message : "tundmatu viga"}`;
+    fetchError = `${t.notes.loadError} — ${e instanceof Error ? e.message : t.common.unknownError}`;
   }
 
   return (
@@ -37,7 +39,7 @@ export default async function Home() {
           </Card>
         ) : notes.length === 0 ? (
           <Typography sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-            Märkmeid pole. Lisa esimene!
+            {t.notes.empty}
           </Typography>
         ) : (
           notes.map((note) => <NoteCard key={note.id} note={note} />)

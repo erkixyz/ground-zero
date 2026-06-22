@@ -12,8 +12,10 @@ import TextField from "@mui/material/TextField";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { sendNote } from "@/app/actions";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SendNoteButton({ noteId }: { noteId: number }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -53,22 +55,22 @@ export default function SendNoteButton({ noteId }: { noteId: number }) {
         size="small"
         onClick={handleOpen}
         sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
-        aria-label="Saada e-postiga"
+        aria-label={t.send.ariaLabel}
       >
         <SendIcon fontSize="small" />
       </IconButton>
 
       <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
         <form onSubmit={handleSubmit}>
-          <DialogTitle>Saada märge e-postiga</DialogTitle>
+          <DialogTitle>{t.send.title}</DialogTitle>
           <DialogContent>
             {success ? (
-              <Alert severity="success">Märge saadetud!</Alert>
+              <Alert severity="success">{t.send.sent}</Alert>
             ) : (
               <>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 <TextField
-                  label="Saaja e-post"
+                  label={t.send.recipientEmail}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -83,7 +85,7 @@ export default function SendNoteButton({ noteId }: { noteId: number }) {
           {!success && (
             <DialogActions sx={{ px: 3, pb: 2 }}>
               <Button onClick={handleClose} disabled={pending}>
-                Tühista
+                {t.send.cancel}
               </Button>
               <Button
                 type="submit"
@@ -91,7 +93,7 @@ export default function SendNoteButton({ noteId }: { noteId: number }) {
                 disabled={pending}
                 startIcon={pending ? <CircularProgress size={16} color="inherit" /> : <SendIcon fontSize="small" />}
               >
-                Saada
+                {t.send.send}
               </Button>
             </DialogActions>
           )}

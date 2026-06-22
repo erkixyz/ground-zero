@@ -10,6 +10,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import DeleteButton from "./DeleteButton";
 import SendNoteButton from "./SendNoteButton";
 import NoteFileChip from "./NoteFileChip";
+import { useLanguage } from "@/context/LanguageContext";
 
 type NoteFile = {
   id: number;
@@ -31,14 +32,9 @@ export type Note = {
   author: { firstName: string; lastName: string } | null;
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  isiklik: "Isiklik",
-  too: "Töö",
-  ideed: "Ideed",
-  muu: "Muu",
-};
-
 export default function NoteCard({ note }: { note: Note }) {
+  const { t } = useLanguage();
+
   return (
     <Card sx={note.pinned ? { borderColor: "primary.dark", borderWidth: 1, borderStyle: "solid" } : {}}>
       <CardContent sx={{ pb: "12px !important" }}>
@@ -62,21 +58,21 @@ export default function NoteCard({ note }: { note: Note }) {
 
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1.5 }}>
               <Chip
-                label={new Date(note.createdAt).toLocaleString("et-EE", { timeZone: "Europe/Tallinn" })}
+                label={new Date(note.createdAt).toLocaleString(t.common.localeCode, { timeZone: "Europe/Tallinn" })}
                 size="small"
                 variant="outlined"
                 sx={{ borderColor: "divider", color: "text.secondary", fontSize: 11 }}
               />
               <Chip
                 icon={<PersonOutlinedIcon sx={{ fontSize: "13px !important" }} />}
-                label={note.author ? `${note.author.firstName} ${note.author.lastName}` : "Anonüümne"}
+                label={note.author ? `${note.author.firstName} ${note.author.lastName}` : t.notes.anonymous}
                 size="small"
                 variant="outlined"
                 sx={{ borderColor: "divider", color: "text.secondary", fontSize: 11 }}
               />
               {note.category && (
                 <Chip
-                  label={CATEGORY_LABELS[note.category] ?? note.category}
+                  label={t.notes.categories[note.category as keyof typeof t.notes.categories] ?? note.category}
                   size="small"
                   color="primary"
                   variant="outlined"

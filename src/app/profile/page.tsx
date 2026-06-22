@@ -12,9 +12,11 @@ import Divider from "@mui/material/Divider";
 import TextField from "@mui/material/TextField";
 import Chip from "@mui/material/Chip";
 import { useAuth } from "@/app/components/AuthProvider";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function ProfilePage() {
                 <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                   {fullName || "—"}
                 </Typography>
-                <Chip label="Kasutaja" size="small" variant="outlined" sx={{ mt: 0.5, fontSize: 11 }} />
+                <Chip label={t.profile.role} size="small" variant="outlined" sx={{ mt: 0.5, fontSize: 11 }} />
               </Box>
             </Stack>
 
@@ -47,28 +49,28 @@ export default function ProfilePage() {
 
             <Stack spacing={2}>
               <TextField
-                label="Eesnimi"
+                label={t.profile.firstName}
                 value={user.firstName}
                 slotProps={{ input: { readOnly: true } }}
                 fullWidth
                 size="small"
               />
               <TextField
-                label="Perekonnanimi"
+                label={t.profile.lastName}
                 value={user.lastName}
                 slotProps={{ input: { readOnly: true } }}
                 fullWidth
                 size="small"
               />
               <TextField
-                label="E-post"
+                label={t.profile.email}
                 value={user.email}
                 slotProps={{ input: { readOnly: true } }}
                 fullWidth
                 size="small"
               />
               <TextField
-                label="Kasutaja ID"
+                label={t.profile.userId}
                 value={user.id}
                 slotProps={{ input: { readOnly: true } }}
                 fullWidth

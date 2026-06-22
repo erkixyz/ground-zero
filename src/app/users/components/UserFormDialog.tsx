@@ -11,6 +11,7 @@ import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { createUser, updateUser, UserFormState } from "../actions";
+import { useLanguage } from "@/context/LanguageContext";
 
 export type UserRow = {
   id: string;
@@ -27,6 +28,7 @@ type Props = {
 };
 
 export default function UserFormDialog({ open, user, onClose }: Props) {
+  const { t } = useLanguage();
   const isEdit = user !== null;
 
   const action = isEdit
@@ -42,7 +44,7 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <form action={formAction}>
-        <DialogTitle>{isEdit ? "Muuda kasutajat" : "Lisa kasutaja"}</DialogTitle>
+        <DialogTitle>{isEdit ? t.users.editUser : t.users.addUser2}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             {state && "error" in state && (
@@ -50,7 +52,7 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
             )}
             <TextField
               name="firstName"
-              label="Eesnimi"
+              label={t.users.firstName}
               required
               fullWidth
               defaultValue={user?.firstName ?? ""}
@@ -58,14 +60,14 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
             />
             <TextField
               name="lastName"
-              label="Perenimi"
+              label={t.users.lastNameFull}
               required
               fullWidth
               defaultValue={user?.lastName ?? ""}
             />
             <TextField
               name="email"
-              label="E-post"
+              label={t.users.email}
               type="email"
               required
               fullWidth
@@ -73,7 +75,7 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
             />
             <TextField
               name="password"
-              label={isEdit ? "Uus parool (jäta tühjaks muutmata jätmiseks)" : "Parool"}
+              label={isEdit ? t.users.newPasswordHint : t.users.password}
               type="password"
               required={!isEdit}
               fullWidth
@@ -82,10 +84,10 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={onClose} disabled={pending}>
-            Tühista
+            {t.users.cancel}
           </Button>
           <Button type="submit" variant="contained" disabled={pending} startIcon={pending ? <CircularProgress size={16} color="inherit" /> : null}>
-            {isEdit ? "Salvesta" : "Lisa"}
+            {isEdit ? t.users.save : t.users.add}
           </Button>
         </DialogActions>
       </form>

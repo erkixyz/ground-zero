@@ -26,6 +26,7 @@ services:
       dockerfile: Dockerfile.dev
     environment:
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true
     volumes:
       - .:/app
       - web_node_modules:/app/node_modules
@@ -37,6 +38,7 @@ services:
       dockerfile: Dockerfile.dev
     environment:
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true
     volumes:
       - .:/app
       - web_2_node_modules:/app/node_modules

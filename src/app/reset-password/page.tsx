@@ -12,10 +12,12 @@ import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { authClient } from "../auth-client";
+import { useLanguage } from "@/context/LanguageContext";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useLanguage();
   const token = searchParams.get("token") ?? "";
 
   const [password, setPassword] = useState("");
@@ -27,18 +29,18 @@ function ResetPasswordForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) {
-      setError("Paroolid ei kattu");
+      setError(t.resetPassword.mismatch);
       return;
     }
     if (password.length < 6) {
-      setError("Parool peab olema vähemalt 6 tähemärki");
+      setError(t.resetPassword.tooShort);
       return;
     }
     setError(null);
     startTransition(async () => {
       const { error: err } = await authClient.resetPassword({ newPassword: password, token });
       if (err) {
-        setError((err as { message?: string }).message ?? "Parooli muutmine ebaõnnestus");
+        setError((err as { message?: string }).message ?? t.resetPassword.failed);
       } else {
         setSuccess(true);
         setTimeout(() => router.push("/"), 2500);
@@ -47,7 +49,7 @@ function ResetPasswordForm() {
   };
 
   if (!token) {
-    return <Alert severity="error">Vale või puuduv token. Palu uut lähtestamislinki.</Alert>;
+    return <Alert severity="error">{t.resetPassword.invalidToken}</Alert>;
   }
 
   return (
@@ -55,11 +57,11 @@ function ResetPasswordForm() {
       <Stack spacing={2}>
         {error && <Alert severity="error">{error}</Alert>}
         {success ? (
-          <Alert severity="success">Parool muudetud! Suunamine sisselogimislehele…</Alert>
+          <Alert severity="success">{t.resetPassword.success}</Alert>
         ) : (
           <>
             <TextField
-              label="Uus parool"
+              label={t.resetPassword.newPassword}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -69,7 +71,7 @@ function ResetPasswordForm() {
               autoComplete="new-password"
             />
             <TextField
-              label="Korda parooli"
+              label={t.resetPassword.confirmPassword}
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -83,7 +85,7 @@ function ResetPasswordForm() {
               disabled={pending}
               startIcon={pending ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              Muuda parool
+              {t.resetPassword.submit}
             </Button>
           </>
         )}
@@ -93,12 +95,14 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useLanguage();
+
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}>
       <Card sx={{ maxWidth: 400, width: "100%" }}>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ mb: 3 }}>
-            Parooli lähtestamine
+            {t.resetPassword.title}
           </Typography>
           <Suspense fallback={<CircularProgress size={24} />}>
             <ResetPasswordForm />

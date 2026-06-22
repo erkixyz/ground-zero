@@ -4,6 +4,7 @@ import { useActionState, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createNote, type NoteFormState } from "@/app/actions";
 import { useToast } from "./ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -28,6 +29,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 export default function NoteForm() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { t } = useLanguage();
   const formRef = useRef<HTMLFormElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -47,7 +49,7 @@ export default function NoteForm() {
 
     if (files.length === 0) {
       formRef.current?.reset();
-      showToast("Märge salvestatud");
+      showToast(t.notes.saved);
       router.refresh();
       return;
     }
@@ -63,7 +65,7 @@ export default function NoteForm() {
             { method: "POST", body: fd },
           );
         }
-        showToast("Märge salvestatud");
+        showToast(t.notes.saved);
       } finally {
         setUploading(false);
         setFiles([]);
@@ -81,13 +83,13 @@ export default function NoteForm() {
       <form ref={formRef} action={formAction}>
         <CardContent>
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }} gutterBottom>
-            Lisa märge
+            {t.notes.addNote}
           </Typography>
 
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               name="title"
-              label="Pealkiri"
+              label={t.notes.title}
               required
               disabled={busy}
               fullWidth
@@ -97,7 +99,7 @@ export default function NoteForm() {
 
             <TextField
               name="content"
-              label="Sisu"
+              label={t.notes.content}
               required
               disabled={busy}
               fullWidth
@@ -112,30 +114,29 @@ export default function NoteForm() {
               sx={{ alignItems: { sm: "center" } }}
             >
               <FormControl size="small" sx={{ minWidth: 160 }}>
-                <InputLabel id="category-label">Kategooria</InputLabel>
+                <InputLabel id="category-label">{t.notes.category}</InputLabel>
                 <Select
                   labelId="category-label"
                   name="category"
-                  label="Kategooria"
+                  label={t.notes.category}
                   defaultValue=""
                   disabled={busy}
                 >
-                  <MenuItem value="">— Vali —</MenuItem>
-                  <MenuItem value="isiklik">Isiklik</MenuItem>
-                  <MenuItem value="too">Töö</MenuItem>
-                  <MenuItem value="ideed">Ideed</MenuItem>
-                  <MenuItem value="muu">Muu</MenuItem>
+                  <MenuItem value="">{t.notes.selectCategory}</MenuItem>
+                  <MenuItem value="isiklik">{t.notes.categories.isiklik}</MenuItem>
+                  <MenuItem value="too">{t.notes.categories.too}</MenuItem>
+                  <MenuItem value="ideed">{t.notes.categories.ideed}</MenuItem>
+                  <MenuItem value="muu">{t.notes.categories.muu}</MenuItem>
                 </Select>
               </FormControl>
 
               <FormControlLabel
                 control={<Switch name="pinned" disabled={busy} />}
-                label="Tähtsustatud"
+                label={t.notes.pinned}
                 sx={{ color: "text.secondary", userSelect: "none" }}
               />
             </Stack>
 
-            {/* File picker */}
             <Box>
               <Button
                 component="label"
@@ -145,7 +146,7 @@ export default function NoteForm() {
                 disabled={busy}
                 sx={{ borderColor: "divider", color: "text.secondary" }}
               >
-                Lisa failid
+                {t.notes.addFiles}
                 <input
                   type="file"
                   hidden
@@ -188,7 +189,7 @@ export default function NoteForm() {
             {uploading && (
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Laadin faile…
+                  {t.notes.uploadingFiles}
                 </Typography>
                 <LinearProgress sx={{ mt: 0.5, borderRadius: 1 }} />
               </Box>
@@ -204,7 +205,7 @@ export default function NoteForm() {
             startIcon={<AddIcon />}
             fullWidth
           >
-            {pending ? "Salvestan…" : "Lisa märge"}
+            {pending ? t.notes.saving : t.notes.addNote}
           </Button>
         </CardActions>
       </form>

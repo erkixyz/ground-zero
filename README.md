@@ -161,10 +161,22 @@ redis-sentinel ×3    ▼                           │
 | `localhost:5434` | PostgreSQL replica 2 |
 | `localhost:5435` | PostgreSQL reads via LB |
 | `localhost:6379` | Redis via LB |
-| <http://localhost:15672> | RabbitMQ Management UI (guest/guest) |
+| <http://localhost:15672> | RabbitMQ Management UI |
 | <http://localhost:9090> | Prometheus |
-| <http://localhost:3002> | Grafana dashboards (admin/admin) |
+| <http://localhost:3002> | Grafana dashboards |
 | <http://localhost:3001/metrics> | NestJS Prometheus metrics |
+
+---
+
+## Default credentials
+
+| Service | URL | Username | Password |
+| --- | --- | --- | --- |
+| Grafana | <http://localhost:3002> | `admin` | `admin` |
+| RabbitMQ | <http://localhost:15672> | `guest` | `guest` |
+| MinIO | <http://localhost:9001> | `minioadmin` | `minioadmin123` |
+| PostgreSQL | `localhost:5432` | `postgres` | `postgres` |
+| Redis | `localhost:6379` | — | *(no auth)* |
 
 ---
 
@@ -280,7 +292,7 @@ Toasts can also be pushed directly without RabbitMQ by calling `EventsGateway.no
 
 ### Observability — Prometheus & Grafana
 
-Every service exposes metrics which Prometheus scrapes every 15 seconds and retains for 7 days. Grafana (port 3002, admin/admin) auto-provisions a "Ground Zero" dashboard on first start.
+Every service exposes metrics which Prometheus scrapes every 15 seconds and retains for 7 days. Grafana (port 3002) auto-provisions a "Ground Zero" dashboard on first start.
 
 **Metrics sources:**
 

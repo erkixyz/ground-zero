@@ -24,9 +24,11 @@ import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import UserFormDialog, { UserRow } from "./UserFormDialog";
 import { deleteUser } from "../actions";
 import { useAuth } from "@/app/components/AuthProvider";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function UsersClient({ users }: { users: UserRow[] }) {
   const { user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
@@ -56,24 +58,24 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
     <>
       <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
         <Button variant="contained" startIcon={<PersonAddOutlinedIcon />} onClick={openCreate}>
-          Lisa kasutaja
+          {t.users.addUser}
         </Button>
       </Stack>
 
       {users.length === 0 ? (
         <Typography sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-          Kasutajaid pole. Lisa esimene!
+          {t.users.empty}
         </Typography>
       ) : (
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Eesnimi</TableCell>
-                <TableCell>Perenimi</TableCell>
-                <TableCell>E-post</TableCell>
-                <TableCell>Lisatud</TableCell>
-                <TableCell align="right">Toimingud</TableCell>
+                <TableCell>{t.users.firstName}</TableCell>
+                <TableCell>{t.users.lastName}</TableCell>
+                <TableCell>{t.users.email}</TableCell>
+                <TableCell>{t.users.added}</TableCell>
+                <TableCell align="right">{t.users.actions}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -85,20 +87,20 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                     <TableCell>{user.lastName}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>
-                      {new Date(user.createdAt).toLocaleDateString("et-EE")}
+                      {new Date(user.createdAt).toLocaleDateString(t.common.localeCode)}
                     </TableCell>
                     <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <IconButton size="small" onClick={() => openEdit(user)} aria-label="Muuda">
+                      <IconButton size="small" onClick={() => openEdit(user)} aria-label={t.users.edit}>
                         <EditOutlinedIcon fontSize="small" />
                       </IconButton>
-                      <Tooltip title={isSelf ? "Ei saa iseennast kustutada" : "Kustuta"}>
+                      <Tooltip title={isSelf ? t.users.cantDeleteSelf : t.users.delete}>
                         <span>
                           <IconButton
                             size="small"
                             onClick={() => setDeleteTarget(user)}
                             disabled={isSelf}
                             sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
-                            aria-label="Kustuta"
+                            aria-label={t.users.delete}
                           >
                             <DeleteOutlinedIcon fontSize="small" />
                           </IconButton>
@@ -116,10 +118,10 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
       <UserFormDialog open={dialogOpen} user={editingUser} onClose={closeDialog} />
 
       <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Kustuta kasutaja</DialogTitle>
+        <DialogTitle>{t.users.deleteTitle}</DialogTitle>
         <DialogContent>
           <Typography>
-            Kas oled kindel, et soovid kustutada kasutaja{" "}
+            {t.users.deleteConfirm}{" "}
             <strong>
               {deleteTarget?.firstName} {deleteTarget?.lastName}
             </strong>
@@ -128,7 +130,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDeleteTarget(null)} disabled={deletePending}>
-            Tühista
+            {t.users.cancel}
           </Button>
           <Button
             color="error"
@@ -137,7 +139,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
             onClick={confirmDelete}
             startIcon={deletePending ? <CircularProgress size={16} color="inherit" /> : null}
           >
-            Kustuta
+            {t.users.delete}
           </Button>
         </DialogActions>
       </Dialog>

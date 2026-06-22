@@ -33,11 +33,14 @@ import HubIcon from "@mui/icons-material/Hub";
 import EmailIcon from "@mui/icons-material/Email";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ReactCountryFlag from "react-country-flag";
 import { useAuth } from "./AuthProvider";
+import { useLanguage } from "@/context/LanguageContext";
+import type { Locale } from "@/i18n";
 import LoginDialog from "./LoginDialog";
 import ReadmeDrawer from "./ReadmeDrawer";
 
-const SERVICE_LINKS = [
+const SERVICE_LINKS = (infrastructure: string) => [
   {
     group: "Observability",
     items: [
@@ -48,10 +51,10 @@ const SERVICE_LINKS = [
     ],
   },
   {
-    group: "Infrastruktuur",
+    group: infrastructure,
     items: [
       { label: "RabbitMQ", hint: "guest / guest", href: "http://localhost:15672", icon: <HubIcon fontSize="small" /> },
-      { label: "MinIO", hint: "localhost:9001", href: "http://localhost:9001", icon: <CloudQueueIcon fontSize="small" /> },
+      { label: "MinIO", hint: "minioadmin / minioadmin123", href: "http://localhost:9001", icon: <CloudQueueIcon fontSize="small" /> },
       { label: "Nginx Status", hint: "localhost:8080", href: "http://localhost:8080/nginx-status", icon: <DnsIcon fontSize="small" /> },
       { label: "HAProxy (DB)", hint: "localhost:8404", href: "http://localhost:8404", icon: <TuneIcon fontSize="small" /> },
       { label: "Redis LB", hint: "localhost:8405", href: "http://localhost:8405", icon: <TuneIcon fontSize="small" /> },
@@ -68,11 +71,13 @@ const SERVICE_LINKS = [
 export default function TopBar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t, locale, setLocale } = useLanguage();
   const [loginOpen, setLoginOpen] = useState(false);
   const [readmeOpen, setReadmeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "";
+  const serviceLinks = SERVICE_LINKS(t.services.infrastructure);
 
   return (
     <>
@@ -93,7 +98,7 @@ export default function TopBar() {
               fontWeight: pathname === "/" ? 700 : 400,
             }}
           >
-            Märkmed
+            {t.nav.notes}
           </Button>
           <Button
             component={Link}
@@ -105,11 +110,32 @@ export default function TopBar() {
               fontWeight: pathname === "/users" ? 700 : 400,
             }}
           >
-            Kasutajad
+            {t.nav.users}
           </Button>
 
           <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center" }}>
-            <Tooltip title="README">
+            {(["et", "en"] as Locale[]).map((lang) => (
+              <Tooltip key={lang} title={lang === "et" ? "Eesti" : "English"}>
+                <IconButton
+                  size="small"
+                  onClick={() => setLocale(lang)}
+                  sx={{
+                    p: 0.5,
+                    opacity: locale === lang ? 1 : 0.3,
+                    transition: "opacity 0.15s",
+                    "&:hover": { opacity: 1 },
+                  }}
+                >
+                  <ReactCountryFlag
+                    countryCode={lang === "et" ? "EE" : "GB"}
+                    svg
+                    style={{ width: 20, height: 15, display: "block" }}
+                  />
+                </IconButton>
+              </Tooltip>
+            ))}
+
+            <Tooltip title={t.nav.readme}>
               <IconButton size="small" onClick={() => setReadmeOpen(true)} sx={{ color: "text.secondary" }}>
                 <ArticleIcon fontSize="small" />
               </IconButton>
@@ -117,7 +143,7 @@ export default function TopBar() {
 
             {user ? (
               <>
-                <Tooltip title={`Profiil · ${user.firstName} ${user.lastName}`}>
+                <Tooltip title={`${t.nav.profile} · ${user.firstName} ${user.lastName}`}>
                   <Avatar
                     component={Link}
                     href="/profile"
@@ -135,7 +161,7 @@ export default function TopBar() {
                     {initials}
                   </Avatar>
                 </Tooltip>
-                <Tooltip title="Logi välja">
+                <Tooltip title={t.nav.logout}>
                   <IconButton size="small" onClick={logout} sx={{ color: "text.secondary" }}>
                     <LogoutIcon fontSize="small" />
                   </IconButton>
@@ -143,11 +169,11 @@ export default function TopBar() {
               </>
             ) : (
               <Button size="small" variant="outlined" onClick={() => setLoginOpen(true)} sx={{ mr: 0.5 }}>
-                Logi sisse
+                {t.nav.login}
               </Button>
             )}
 
-            <Tooltip title="Teenused">
+            <Tooltip title={t.nav.services}>
               <IconButton size="small" onClick={() => setMenuOpen(true)} sx={{ color: "text.secondary" }}>
                 <MenuIcon fontSize="small" />
               </IconButton>
@@ -159,9 +185,9 @@ export default function TopBar() {
       <Drawer anchor="right" open={menuOpen} onClose={() => setMenuOpen(false)}>
         <Box sx={{ width: 260, pt: 1 }}>
           <Typography variant="overline" sx={{ px: 2, color: "text.disabled", fontSize: 10 }}>
-            Teenuste lingid
+            {t.services.links}
           </Typography>
-          {SERVICE_LINKS.map((section, i) => (
+          {serviceLinks.map((section, i) => (
             <Box key={section.group}>
               {i > 0 && <Divider sx={{ my: 0.5 }} />}
               <Typography variant="overline" sx={{ px: 2, color: "text.disabled", fontSize: 10 }}>

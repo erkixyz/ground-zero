@@ -13,12 +13,14 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import { useAuth } from "./AuthProvider";
+import { useLanguage } from "@/context/LanguageContext";
 import { authClient } from "../auth-client";
 
 type Props = { open: boolean; onClose: () => void };
 
 export default function LoginDialog({ open, onClose }: Props) {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [view, setView] = useState<"login" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,9 +69,9 @@ export default function LoginDialog({ open, onClose }: Props) {
     });
     setPending(false);
     if (err) {
-      setError((err as { message?: string }).message ?? "Viga päringu saatmisel");
+      setError((err as { message?: string }).message ?? t.login.requestError);
     } else {
-      setSuccess("Kui e-post on registreeritud, saatisime parooli lähtestamise lingi.");
+      setSuccess(t.login.resetEmailSent);
     }
   };
 
@@ -90,12 +92,12 @@ export default function LoginDialog({ open, onClose }: Props) {
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       {view === "login" ? (
         <form onSubmit={handleLogin}>
-          <DialogTitle>Logi sisse</DialogTitle>
+          <DialogTitle>{t.login.title}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}
               <TextField
-                label="E-post"
+                label={t.login.email}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -105,7 +107,7 @@ export default function LoginDialog({ open, onClose }: Props) {
                 autoComplete="email"
               />
               <TextField
-                label="Parool"
+                label={t.login.password}
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -118,9 +120,9 @@ export default function LoginDialog({ open, onClose }: Props) {
                 sx={{ color: "primary.main", cursor: "pointer", alignSelf: "flex-start" }}
                 onClick={switchToForgot}
               >
-                Unustasid parooli?
+                {t.login.forgotPassword}
               </Typography>
-              <Divider>või</Divider>
+              <Divider>{t.login.or}</Divider>
               <Button
                 variant="outlined"
                 fullWidth
@@ -135,25 +137,25 @@ export default function LoginDialog({ open, onClose }: Props) {
                   </svg>
                 }
               >
-                Jätka Google'iga
+                {t.login.continueWithGoogle}
               </Button>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={handleClose} disabled={pending}>Tühista</Button>
+            <Button onClick={handleClose} disabled={pending}>{t.login.cancel}</Button>
             <Button
               type="submit"
               variant="contained"
               disabled={pending}
               startIcon={pending ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              Logi sisse
+              {t.login.submit}
             </Button>
           </DialogActions>
         </form>
       ) : (
         <form onSubmit={handleForgot}>
-          <DialogTitle>Parooli lähtestamine</DialogTitle>
+          <DialogTitle>{t.login.forgotTitle}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}
@@ -161,7 +163,7 @@ export default function LoginDialog({ open, onClose }: Props) {
                 <Alert severity="success">{success}</Alert>
               ) : (
                 <TextField
-                  label="E-post"
+                  label={t.login.email}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -174,7 +176,7 @@ export default function LoginDialog({ open, onClose }: Props) {
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={switchToLogin} disabled={pending}>Tagasi</Button>
+            <Button onClick={switchToLogin} disabled={pending}>{t.login.back}</Button>
             {!success && (
               <Button
                 type="submit"
@@ -182,7 +184,7 @@ export default function LoginDialog({ open, onClose }: Props) {
                 disabled={pending}
                 startIcon={pending ? <CircularProgress size={16} color="inherit" /> : null}
               >
-                Saada link
+                {t.login.sendLink}
               </Button>
             )}
           </DialogActions>

@@ -7,8 +7,10 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import UsersClient from "./components/UsersClient";
 import { UserRow } from "./components/UserFormDialog";
+import { getServerTranslations } from "@/i18n/server";
 
 export default async function UsersPage() {
+  const { t } = await getServerTranslations();
   let users: UserRow[] = [];
   let fetchError: string | null = null;
 
@@ -17,14 +19,14 @@ export default async function UsersPage() {
     if (!res.ok) throw new Error(`${res.status}`);
     users = await res.json();
   } catch (e) {
-    fetchError = `Kasutajate laadimine ebaõnnestus — ${e instanceof Error ? e.message : "tundmatu viga"}`;
+    fetchError = `${t.users.loadError} — ${e instanceof Error ? e.message : t.common.unknownError}`;
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={3}>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Kasutajad
+          {t.users.title}
         </Typography>
 
         {fetchError ? (
