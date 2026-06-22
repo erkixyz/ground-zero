@@ -1,0 +1,3 @@
+db-primary:5432:groundzero:postgres:postgres
+db-secondary:5432:groundzero:postgres:postgres
+db-secondary-2:5432:groundzero:postgres:postgres

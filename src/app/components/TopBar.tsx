@@ -16,6 +16,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Box from "@mui/material/Box";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import StorageIcon from "@mui/icons-material/Storage";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
@@ -56,6 +57,7 @@ const SERVICE_LINKS = (infrastructure: string) => [
       { label: "RabbitMQ", hint: "guest / guest", href: "http://localhost:15672", icon: <HubIcon fontSize="small" /> },
       { label: "MinIO", hint: "minioadmin / minioadmin123", href: "http://localhost:9001", icon: <CloudQueueIcon fontSize="small" /> },
       { label: "Nginx Status", hint: "localhost:8080", href: "http://localhost:8080/nginx-status", icon: <DnsIcon fontSize="small" /> },
+      { label: "pgAdmin", hint: "admin@admin.com / admin", href: "http://localhost:5050", icon: <TableChartOutlinedIcon fontSize="small" /> },
       { label: "HAProxy (DB)", hint: "localhost:8404", href: "http://localhost:8404", icon: <TuneIcon fontSize="small" /> },
       { label: "Redis LB", hint: "localhost:8405", href: "http://localhost:8405", icon: <TuneIcon fontSize="small" /> },
     ],

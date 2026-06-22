@@ -112,6 +112,7 @@ Full-stack web application with a highly available, load-balanced container infr
 | `minio-lb` | nginx:alpine | MinIO round-robin load balancer | 9000, 9001 |
 | `minio-1` | minio/minio | MinIO node 1 (distributed, 2 drives) | — |
 | `minio-2` | minio/minio | MinIO node 2 (distributed, 2 drives) | — |
+| `pgadmin` | dpage/pgadmin4 | PostgreSQL web UI | 5050 |
 | `prometheus` | prom/prometheus | Metrics collection & storage | 9090 |
 | `grafana` | grafana/grafana-oss | Metrics dashboards | 3002 |
 | `postgres-exporter` | prometheuscommunity/postgres-exporter | PostgreSQL metrics exporter | — |
@@ -156,6 +157,7 @@ redis-sentinel ×3    ▼                           │
 | <http://localhost:8405> | HAProxy stats — Redis LB |
 | <http://localhost:9000> | MinIO S3 API (via nginx LB) |
 | <http://localhost:9001> | MinIO Console (via nginx LB) |
+| <http://localhost:5050> | pgAdmin — PostgreSQL web UI |
 | `localhost:5432` | PostgreSQL primary (writes) |
 | `localhost:5433` | PostgreSQL replica 1 |
 | `localhost:5434` | PostgreSQL replica 2 |
@@ -175,6 +177,7 @@ redis-sentinel ×3    ▼                           │
 | Grafana | <http://localhost:3002> | `admin` | `admin` |
 | RabbitMQ | <http://localhost:15672> | `guest` | `guest` |
 | MinIO | <http://localhost:9001> | `minioadmin` | `minioadmin123` |
+| pgAdmin | <http://localhost:5050> | `admin@admin.com` | `admin` |
 | PostgreSQL | `localhost:5432` | `postgres` | `postgres` |
 | Redis | `localhost:6379` | — | *(no auth)* |
 
