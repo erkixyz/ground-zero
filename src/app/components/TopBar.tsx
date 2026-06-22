@@ -63,7 +63,7 @@ const SERVICE_LINKS = (infrastructure: string) => [
   {
     group: "API",
     items: [
-      { label: "Swagger UI", hint: "localhost:3001/api", href: "http://localhost:3001/api", icon: <DataObjectIcon fontSize="small" /> },
+      { label: "Swagger UI", hint: "localhost:3001/docs", href: "http://localhost:3001/docs", icon: <DataObjectIcon fontSize="small" /> },
     ],
   },
 ];
