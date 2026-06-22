@@ -50,7 +50,7 @@ export default function LoginDialog({ open, onClose }: Props) {
     const err = await login(email, password);
     setPending(false);
     if (err) {
-      setError(err);
+      setError(/invalid email or password/i.test(err) ? t.login.invalidCredentials : err);
     } else {
       setEmail("");
       setPassword("");

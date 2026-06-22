@@ -51,6 +51,7 @@ const translations = {
       back: "Tagasi",
       resetEmailSent: "Kui e-post on registreeritud, saatisime parooli lähtestamise lingi.",
       requestError: "Viga päringu saatmisel",
+      invalidCredentials: "Vale e-posti aadress või parool",
     },
     resetPassword: {
       title: "Parooli lähtestamine",
@@ -157,6 +158,7 @@ const translations = {
       back: "Back",
       resetEmailSent: "If this email is registered, we sent a password reset link.",
       requestError: "Error sending request",
+      invalidCredentials: "Invalid email or password",
     },
     resetPassword: {
       title: "Reset password",

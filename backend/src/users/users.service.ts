@@ -75,10 +75,24 @@ export class UsersService {
 
     if (data.password) {
       const hashedPw = hashPassword(data.password);
-      await this.prisma.write.account.updateMany({
+      const credAccount = await this.prisma.write.account.findFirst({
         where: { userId: id, providerId: "credential" },
-        data: { password: hashedPw },
       });
+      if (credAccount) {
+        await this.prisma.write.account.update({
+          where: { id: credAccount.id },
+          data: { password: hashedPw },
+        });
+      } else {
+        await this.prisma.write.account.create({
+          data: {
+            userId: id,
+            accountId: user.email,
+            providerId: "credential",
+            password: hashedPw,
+          },
+        });
+      }
     }
 
     return updated;
