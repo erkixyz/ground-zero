@@ -42,7 +42,10 @@
       "Bash(docker pull *)",
       "Read(//usr/local/bin/**)",
       "Read(//Users/erkik/.nvm/versions/node/**)",
-      "Bash(node -e \"require\\('/Users/erkik/Projects/ground-zero/backend/node_modules/connect-redis'\\)\")"
+      "Bash(node -e \"require\\('/Users/erkik/Projects/ground-zero/backend/node_modules/connect-redis'\\)\")",
+      "PowerShell(docker compose build 2>&1)",
+      "Bash(Start-Sleep -Seconds 15)",
+      "Bash(git config *)"
     ]
   }
 }
