@@ -25,6 +25,12 @@ export class UsersService {
     });
   }
 
+  async findOne(id: string) {
+    const user = await this.prisma.read.user.findUnique({ where: { id }, select: userSelect });
+    if (!user) throw new NotFoundException("Kasutajat ei leitud");
+    return user;
+  }
+
   async create(data: { firstName: string; lastName: string; email: string; password: string }) {
     const existing = await this.prisma.write.user.findUnique({ where: { email: data.email } });
     if (existing) throw new ConflictException("Selle e-postiga kasutaja on juba olemas");

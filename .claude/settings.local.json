@@ -83,7 +83,11 @@
       "PowerShell(docker exec ground-zero-ollama-1-1 ollama pull llama3.2:3b 2>&1)",
       "PowerShell(docker exec ground-zero-ollama-2-1 ollama pull llama3.2:3b 2>&1)",
       "PowerShell(docker-compose up -d --force-recreate web web-2 2>&1)",
-      "PowerShell(docker exec ground-zero-ollama-2-1 ollama list 2>&1)"
+      "PowerShell(docker exec ground-zero-ollama-2-1 ollama list 2>&1)",
+      "Skill(run)",
+      "Skill(run:*)",
+      "PowerShell(docker compose -f docker-compose.yml -f docker-compose.dev.yml ps --format \"table {{.Name}}\\\\t{{.Status}}\\\\t{{.Ports}}\" 2>&1)",
+      "PowerShell(docker compose -f docker-compose.yml -f docker-compose.dev.yml ps --format \"table {{.Name}}\\\\t{{.Status}}\" 2>&1)"
     ]
   }
 }

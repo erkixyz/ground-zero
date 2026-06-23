@@ -21,6 +21,7 @@ import Tooltip from "@mui/material/Tooltip";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
+import Link from "next/link";
 import UserFormDialog, { UserRow } from "./UserFormDialog";
 import { deleteUser } from "../actions";
 import { useAuth } from "@/app/components/AuthProvider";
@@ -82,12 +83,26 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
               {users.map((user) => {
                 const isSelf = currentUser?.id === user.id;
                 return (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{user.firstName}</TableCell>
-                    <TableCell>{user.lastName}</TableCell>
-                    <TableCell>{user.email}</TableCell>
+                  <TableRow key={user.id} hover sx={{ cursor: "pointer" }}>
+                    <TableCell>
+                      <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        {user.firstName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        {user.lastName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        {user.email}
+                      </Link>
+                    </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>
-                      {new Date(user.createdAt).toLocaleDateString(t.common.localeCode)}
+                      <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        {new Date(user.createdAt).toLocaleDateString(t.common.localeCode)}
+                      </Link>
                     </TableCell>
                     <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                       <IconButton size="small" onClick={() => openEdit(user)} aria-label={t.users.edit}>

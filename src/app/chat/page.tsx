@@ -165,7 +165,13 @@ export default function ChatPage() {
         {messages.length === 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 2, color: "text.disabled" }}>
             <SmartToyIcon sx={{ fontSize: 72, opacity: 0.25 }} />
-            <Typography color="text.disabled">Alusta vestlust…</Typography>
+            <Typography color="text.disabled" align="center">
+            Alusta vestlust…
+            <br />
+            <Typography variant="caption" color="text.disabled">
+              AI näeb kõiki märkmeid ja kasutajaid — küsi julgelt
+            </Typography>
+          </Typography>
           </Box>
         )}
 

@@ -32,6 +32,15 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @ApiOperation({ summary: 'Get user by id' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, type: UserEntity })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.usersService.findOne(id);
+  }
+
   @ApiOperation({ summary: 'Create user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, type: UserEntity })

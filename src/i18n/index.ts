@@ -90,6 +90,8 @@ const translations = {
       addUser2: "Lisa kasutaja",
       newPasswordHint: "Uus parool (jäta tühjaks muutmata jätmiseks)",
       password: "Parool",
+      backToUsers: "Tagasi kasutajatele",
+      notFound: "Kasutajat ei leitud",
     },
     profile: {
       role: "Kasutaja",
@@ -207,6 +209,8 @@ const translations = {
       addUser2: "Add user",
       newPasswordHint: "New password (leave blank to keep unchanged)",
       password: "Password",
+      backToUsers: "Back to users",
+      notFound: "User not found",
     },
     profile: {
       role: "User",

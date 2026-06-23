@@ -96,7 +96,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
     if (!results) return [];
     return [
       ...results.notes.map((n) => `/notes/${n.id}`),
-      ...results.users.map(() => "/users"),
+      ...results.users.map((u) => `/users/${u.id}`),
     ];
   }, [results]);
 
@@ -253,7 +253,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
                         key={user.id}
                         ref={(el) => { itemRefs.current[usersStart + i] = el; }}
                         selected={activeIndex === usersStart + i}
-                        onClick={() => navigate("/users")}
+                        onClick={() => navigate(`/users/${user.id}`)}
                         onMouseMove={() => setActiveIndex(usersStart + i)}
                       >
                         <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
