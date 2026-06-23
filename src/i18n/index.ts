@@ -114,6 +114,7 @@ const translations = {
       users: "Kasutajad",
       noResults: "Tulemusi ei leitud",
       viewAll: "Vaata kõiki",
+      shortcut: "Ctrl+K",
     },
     common: {
       unknownError: "tundmatu viga",
@@ -233,6 +234,7 @@ const translations = {
       users: "Users",
       noResults: "No results found",
       viewAll: "View all",
+      shortcut: "Ctrl+K",
     },
     common: {
       unknownError: "unknown error",
