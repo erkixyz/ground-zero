@@ -22,8 +22,8 @@ type Message = { id: string; role: "user" | "assistant"; content: string };
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const MODELS = [
-  { id: "qwen2:0.5b", label: "Qwen2 0.5B", hint: "kiire, inglise keel" },
   { id: "llama3.2:3b", label: "Llama 3.2 3B", hint: "eesti keel" },
+  { id: "qwen2:0.5b", label: "Qwen2 0.5B", hint: "kiire, inglise keel" },
 ];
 
 export default function ChatPage() {

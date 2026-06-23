@@ -39,28 +39,29 @@ export class ChatService {
         ).join("\n");
 
     return `You are a helpful assistant for the Ground Zero notes application.\n` +
-      `You have real-time access to all notes and users in the system — use this data to answer questions accurately.\n\n` +
-      `NOTES (${notes.length} total):\n${notesBlock}\n\n` +
-      `USERS (${users.length} total):\n${usersBlock}\n\n` +
-      `When the user asks about notes or users, refer to the data above. ` +
-      `If something is not in the data, say so clearly. ` +
-      `Answer in the same language the user writes in.`;
+      `IMPORTANT: Answer ONLY based on the data provided below. Do NOT invent, guess, or use prior knowledge about users or notes.\n\n` +
+      `CURRENT DATA (live from database):\n\n` +
+      `NOTES — exactly ${notes.length} total:\n${notesBlock}\n\n` +
+      `USERS — exactly ${users.length} total:\n${usersBlock}\n\n` +
+      `Rules:\n` +
+      `- If asked how many users/notes exist, use the exact counts above.\n` +
+      `- If asked to list users/notes, list only what is above — nothing more.\n` +
+      `- If something is not in the data above, say it is not found.\n` +
+      `- Answer in the same language the user writes in.`;
   }
 
   async stream(dto: ChatDto, res: Response): Promise<void> {
     const model = dto.model ?? this.defaultModel;
 
     const systemPrompt = await this.buildSystemPrompt();
-    const systemMessage: MessageDto = { role: "system", content: systemPrompt };
     const userMessages = dto.messages.filter((m) => m.role !== "system");
-    const messages = [systemMessage, ...userMessages];
 
     let ollamaRes: globalThis.Response;
     try {
       ollamaRes = await fetch(`${this.ollamaUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, stream: true }),
+        body: JSON.stringify({ model, system: systemPrompt, messages: userMessages, stream: true }),
       });
     } catch {
       res.status(503).json({ error: "AI service unavailable" });
