@@ -515,6 +515,13 @@ services:
       - ollama_1_data:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=-1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 5s
@@ -529,6 +536,13 @@ services:
       - ollama_2_data:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=-1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 5s
@@ -551,6 +565,23 @@ services:
         OLLAMA_HOST=http://ollama-2:11434 /bin/ollama pull qwen2:0.5b &
         OLLAMA_HOST=http://ollama-1:11434 /bin/ollama pull llama3.2:3b &
         OLLAMA_HOST=http://ollama-2:11434 /bin/ollama pull llama3.2:3b &
+        wait
+    restart: "no"
+
+  ollama-warmup:
+    image: curlimages/curl:latest
+    depends_on:
+      ollama-1:
+        condition: service_healthy
+      ollama-2:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        curl -sf -X POST http://ollama-1:11434/api/generate \
+          -d '{"model":"llama3.2:3b","prompt":"hi","stream":false}' &
+        curl -sf -X POST http://ollama-2:11434/api/generate \
+          -d '{"model":"llama3.2:3b","prompt":"hi","stream":false}' &
         wait
     restart: "no"
 
