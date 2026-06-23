@@ -549,6 +549,8 @@ services:
       - |
         OLLAMA_HOST=http://ollama-1:11434 /bin/ollama pull qwen2:0.5b &
         OLLAMA_HOST=http://ollama-2:11434 /bin/ollama pull qwen2:0.5b &
+        OLLAMA_HOST=http://ollama-1:11434 /bin/ollama pull llama3.2:3b &
+        OLLAMA_HOST=http://ollama-2:11434 /bin/ollama pull llama3.2:3b &
         wait
     restart: "no"
 

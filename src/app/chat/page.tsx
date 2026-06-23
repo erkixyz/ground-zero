@@ -9,7 +9,9 @@ import Paper from "@mui/material/Paper";
 import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
 import Tooltip from "@mui/material/Tooltip";
-import Chip from "@mui/material/Chip";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
@@ -18,13 +20,18 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const MODEL = process.env.NEXT_PUBLIC_OLLAMA_MODEL ?? "qwen2:0.5b";
+
+const MODELS = [
+  { id: "qwen2:0.5b", label: "Qwen2 0.5B", hint: "kiire, inglise keel" },
+  { id: "llama3.2:3b", label: "Llama 3.2 3B", hint: "eesti keel" },
+];
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [model, setModel] = useState(MODELS[0].id);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -55,7 +62,7 @@ export default function ChatPage() {
         credentials: "include",
         signal: ctrl.signal,
         body: JSON.stringify({
-          model: MODEL,
+          model,
           messages: history.map(({ role, content }) => ({ role, content })),
         }),
       });
@@ -121,7 +128,23 @@ export default function ChatPage() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <SmartToyIcon color="primary" />
           <Typography variant="h6" sx={{ fontWeight: 700 }}>AI Chat</Typography>
-          <Chip label={MODEL} size="small" variant="outlined" sx={{ fontSize: 11 }} />
+          <FormControl size="small">
+            <Select
+              value={model}
+              onChange={(e) => { setModel(e.target.value); setMessages([]); setError(null); }}
+              disabled={streaming}
+              sx={{ fontSize: 12, "& .MuiSelect-select": { py: 0.5, px: 1.25 } }}
+            >
+              {MODELS.map((m) => (
+                <MenuItem key={m.id} value={m.id}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.3 }}>{m.label}</Typography>
+                    <Typography variant="caption" color="text.disabled">{m.hint}</Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
         <Tooltip title="Tühjenda vestlus">
           <span>
