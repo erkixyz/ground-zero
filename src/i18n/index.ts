@@ -104,6 +104,14 @@ const translations = {
       cancel: "Tühista",
       send: "Saada",
     },
+    search: {
+      placeholder: "Otsi märkmeid ja kasutajaid…",
+      shortcut: "Ctrl+K",
+      notes: "Märkmed",
+      users: "Kasutajad",
+      noResults: "Tulemusi ei leitud",
+      viewAll: "Vaata kõiki",
+    },
     common: {
       unknownError: "tundmatu viga",
       localeCode: "et-EE",
@@ -211,6 +219,14 @@ const translations = {
       recipientEmail: "Recipient email",
       cancel: "Cancel",
       send: "Send",
+    },
+    search: {
+      placeholder: "Search notes and users…",
+      shortcut: "Ctrl+K",
+      notes: "Notes",
+      users: "Users",
+      noResults: "No results found",
+      viewAll: "View all",
     },
     common: {
       unknownError: "unknown error",

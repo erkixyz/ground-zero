@@ -11,6 +11,7 @@ import { NotesModule } from "./notes/notes.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { ChatModule } from "./chat/chat.module";
+import { SearchModule } from "./search/search.module";
 import { HttpLoggingInterceptor } from "./logging/http-logging.interceptor";
 import { MailModule } from "./mail/mail.module";
 
@@ -37,6 +38,7 @@ import { MailModule } from "./mail/mail.module";
     UsersModule,
     AuthModule,
     ChatModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [

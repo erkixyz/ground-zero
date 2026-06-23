@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -22,6 +22,7 @@ import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import LogoutIcon from "@mui/icons-material/Logout";
+import SearchIcon from "@mui/icons-material/Search";
 import ArticleIcon from "@mui/icons-material/Article";
 import MenuIcon from "@mui/icons-material/Menu";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -41,6 +42,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import type { Locale } from "@/i18n";
 import LoginDialog from "./LoginDialog";
 import ReadmeDrawer from "./ReadmeDrawer";
+import GlobalSearch from "./GlobalSearch";
 
 const SERVICE_LINKS = (infrastructure: string) => [
   {
@@ -78,6 +80,18 @@ export default function TopBar() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [readmeOpen, setReadmeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "";
   const serviceLinks = SERVICE_LINKS(t.services.infrastructure);
@@ -129,6 +143,12 @@ export default function TopBar() {
           </Button>
 
           <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center" }}>
+            <Tooltip title={`${t.search.placeholder} (${t.search.shortcut})`}>
+              <IconButton size="small" onClick={() => setSearchOpen(true)} sx={{ color: "text.secondary" }}>
+                <SearchIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
             {(["et", "en"] as Locale[]).map((lang) => (
               <Tooltip key={lang} title={lang === "et" ? "Eesti" : "English"}>
                 <IconButton
@@ -239,6 +259,7 @@ export default function TopBar() {
 
       <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
       <ReadmeDrawer open={readmeOpen} onClose={() => setReadmeOpen(false)} />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }
