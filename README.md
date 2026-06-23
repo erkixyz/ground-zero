@@ -45,7 +45,7 @@ Full-stack web application with a highly available, load-balanced container infr
                                         │                  │
                                ┌────────▼──────┐  ┌────────▼──────┐
                                │   ollama-1    │  │   ollama-2    │
-                               │  qwen2:0.5b   │  │  qwen2:0.5b   │
+                               │ llama3.2:3b   │  │ llama3.2:3b   │
                                │   :11434      │  │   :11434      │
                                └───────────────┘  └───────────────┘
                                         │
@@ -129,8 +129,8 @@ Full-stack web application with a highly available, load-balanced container infr
 | `postgres-exporter` | prometheuscommunity/postgres-exporter | PostgreSQL metrics exporter | — |
 | `redis-exporter` | oliver006/redis_exporter | Redis metrics exporter | — |
 | `nginx-exporter` | nginx/nginx-prometheus-exporter | nginx metrics exporter | — |
-| `ollama-1` | ollama/ollama | Local LLM inference node 1 | — |
-| `ollama-2` | ollama/ollama | Local LLM inference node 2 | — |
+| `ollama-1` | ollama/ollama | Local LLM inference node 1 (llama3.2:3b) | — |
+| `ollama-2` | ollama/ollama | Local LLM inference node 2 (llama3.2:3b) | — |
 | `ollama-lb` | nginx:alpine | Ollama round-robin load balancer | 11434 |
 | `ollama-setup` | ollama/ollama | One-time model pull (exits after completion) | — |
 
@@ -370,8 +370,10 @@ Google provider is activated conditionally — if either variable is absent, onl
 | Route | Description |
 | --- | --- |
 | `/` | Notes list with create form |
+| `/notes/[id]` | Note detail view |
 | `/users` | User management |
-| `/chat` | AI chat (streaming, via Ollama) |
+| `/users/[id]` | User detail view |
+| `/chat` | AI chat with RAG context and tool-calling |
 | `/profile` | Authenticated user's profile (read-only) |
 | `/reset-password` | Password reset (token from email) |
 
@@ -383,7 +385,7 @@ A full-text search dialog searches across both notes and users simultaneously.
 - Results are grouped by type (Notes / Users) and limited to 5 per group
 - Matching text is highlighted inline; note snippets show context around the match
 - Navigate results with **↑ / ↓** arrow keys and confirm with **Enter**
-- Notes results navigate to `/`; user results navigate to `/users`
+- Clicking a note navigates to `/notes/[id]`; clicking a user navigates to `/users/[id]`
 
 **API endpoint:** `GET /api/search?q=<query>` — returns `{ notes: [...], users: [...] }`. Notes are matched against `title` and `content`; users against `firstName`, `lastName`, and `email` (all case-insensitive).
 
@@ -417,30 +419,81 @@ this.messaging.publish(JSON.stringify({
 
 ## AI Chat
 
-The `/chat` page streams responses from a local LLM running in Docker — no external API keys required.
+The `/chat` page connects to a local LLM running in Docker — no external API keys required. The AI has live read access to the database and can create, update, and delete both notes and users.
 
 ### Architecture
 
 ```text
 Browser → POST /api/chat (NestJS)
                │
+               ├─ 1. Build system prompt (live DB snapshot)
+               │
                ▼
-        ollama-lb (nginx, :11434)
+        ollama-lb (nginx, :11434)          stream: false (tool detection)
          round-robin
         ┌──────┴──────┐
         ▼             ▼
     ollama-1      ollama-2
-   qwen2:0.5b    qwen2:0.5b
+  llama3.2:3b   llama3.2:3b
+
+        if tool_calls in response:
+               │
+               ├─ execute tool (Prisma write DB)
+               ├─ rebuild system prompt (fresh DB snapshot)
+               └─ loop (max 6 iterations)
+
+        else: stream plain text response to browser
 ```
 
-- `NestJS ChatController` receives `{ model, messages[] }`, proxies a streaming request to `ollama-lb`
-- Ollama streams NDJSON; NestJS parses each line and pipes `message.content` chunks to the client via `Transfer-Encoding: chunked`
-- The browser reads the response with a `ReadableStream` reader and appends each chunk in real-time
-- `OLLAMA_KEEP_ALIVE=-1` keeps the model loaded in memory permanently (no cold-start delay after the first request)
+### RAG context injection
+
+Before every request NestJS fetches all notes and users from the database and injects them as a system prompt. This gives the model an accurate, up-to-date view of the data without any vector search or embeddings.
+
+```
+NOTES — exactly N total:
+  [id:1] "Title" — Author Name (category, pinned)
+  Content preview (first 300 chars)…
+
+USERS — exactly N total:
+  [id:abc] First Last <email@example.com> joined 2025-01-01
+```
+
+The system prompt also instructs the model to answer only from this data (no hallucination), to match the user's language, and to use tools when mutations are requested.
+
+### Tool-calling
+
+The model can call six tools to mutate data. Tool execution is handled entirely server-side — the browser only sees the final text response.
+
+| Tool | Description | Required arguments |
+| --- | --- | --- |
+| `create_note` | Create a new note | `title`, `content` |
+| `update_note` | Update an existing note (partial) | `id` |
+| `delete_note` | Permanently delete a note | `id` |
+| `create_user` | Create a user with a generated temp password | `firstName`, `lastName`, `email` |
+| `update_user` | Update an existing user (partial) | `id` |
+| `delete_user` | Permanently delete a user | `id` |
+
+**Request/response cycle (tool path):**
+
+1. NestJS sends `{ model, system, messages, tools, stream: false }` to Ollama
+2. Ollama returns a message with `tool_calls` instead of plain text
+3. NestJS executes each tool call against the write database via Prisma
+4. The tool result is appended to the message history as `role: "tool"`
+5. The system prompt is rebuilt to reflect the updated data
+6. NestJS loops back to step 1 — up to **6 iterations** per request
+7. Once Ollama returns a plain text response (no `tool_calls`), it is written to the HTTP response and the connection is closed
+
+**Example conversation:**
+
+> **User:** Lisa uus märge pealkirjaga "Koosolek" ja sisuga "Arutada Q3 plaane"
+>
+> **AI (internally):** calls `create_note({ title: "Koosolek", content: "Arutada Q3 plaane" })`
+>
+> **AI (to user):** Märge "Koosolek" on edukalt loodud (id: 42).
 
 ### Model
 
-Default model: `qwen2:0.5b` (~352 MB). Runs on CPU. Replace with any model available on [ollama.com/library](https://ollama.com/library) by changing `OLLAMA_MODEL` in `docker-compose.yml` and re-running `ollama-setup`.
+Default model: `llama3.2:3b` (~2 GB). Runs on CPU; GPU-accelerated if available. Replace with any tool-calling-capable model from [ollama.com/library](https://ollama.com/library) by changing `OLLAMA_MODEL` in `docker-compose.yml` and re-running `ollama-setup`.
 
 ```bash
 # Pull a different model manually
@@ -448,13 +501,15 @@ docker exec ground-zero-ollama-1-1 ollama pull <model>
 docker exec ground-zero-ollama-2-1 ollama pull <model>
 ```
 
+> **Note:** Tool-calling requires a model that supports the Ollama `tools` API (e.g. `llama3.2`, `mistral-nemo`, `qwen2.5`). Smaller models like `qwen2:0.5b` do not support tool-calling.
+
 ### Environment variables (AI)
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `OLLAMA_URL` | `http://ollama-lb:11434` | Ollama endpoint (API containers) |
-| `OLLAMA_MODEL` | `qwen2:0.5b` | Default model used when none is specified in the request |
-| `NEXT_PUBLIC_OLLAMA_MODEL` | `qwen2:0.5b` | Model name shown in the chat UI chip |
+| `OLLAMA_MODEL` | `llama3.2:3b` | Default model used when none is specified in the request |
+| `NEXT_PUBLIC_OLLAMA_MODEL` | `llama3.2:3b` | Model name shown in the chat UI |
 
 ---
 
@@ -491,4 +546,4 @@ In `--dev` mode (`docker-compose.dev.yml` overlay):
 | `MAIL_PASS` | — | SMTP password (optional) |
 | `MAIL_FROM` | `noreply@localhost` | From address for outgoing emails |
 | `OLLAMA_URL` | `http://ollama-lb:11434` | Ollama API endpoint |
-| `OLLAMA_MODEL` | `qwen2:0.5b` | Default LLM model |
+| `OLLAMA_MODEL` | `llama3.2:3b` | Default LLM model |

@@ -205,7 +205,10 @@ export default function ChatPage() {
               }}
             >
               {msg.content || (streaming && msg.role === "assistant"
-                ? <CircularProgress size={12} color="inherit" sx={{ opacity: 0.6 }} />
+                ? <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CircularProgress size={12} color="inherit" sx={{ opacity: 0.6 }} />
+                    <Typography variant="caption" sx={{ opacity: 0.6 }}>töötab…</Typography>
+                  </Box>
                 : null)}
             </Paper>
           </Box>
