@@ -5,6 +5,7 @@ const translations = {
     nav: {
       notes: "Märkmed",
       users: "Kasutajad",
+      chat: "AI Chat",
       services: "Teenused",
       readme: "README",
       login: "Logi sisse",
@@ -112,6 +113,7 @@ const translations = {
     nav: {
       notes: "Notes",
       users: "Users",
+      chat: "AI Chat",
       services: "Services",
       readme: "README",
       login: "Log in",

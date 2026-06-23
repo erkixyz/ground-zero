@@ -58,7 +58,27 @@
       "Bash(dir \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules\\\\better-auth\")",
       "Bash(dir \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\" /ad)",
       "PowerShell($content = Get-Content \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\package-lock.json\" -Raw; $idx = $content.IndexOf\\('\"node_modules/better-auth\"'\\); $content.Substring\\($idx, 300\\))",
-      "PowerShell(\\(Get-ChildItem \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules\"\\).Count)"
+      "PowerShell(\\(Get-ChildItem \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules\"\\).Count)",
+      "PowerShell($lockfile = Get-Content \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\package-lock.json\" -Raw; $idx = $lockfile.IndexOf\\('\"node_modules/@mui/icons-material\"'\\); $lockfile.Substring\\($idx, 150\\))",
+      "PowerShell(docker-compose build web 2>&1)",
+      "PowerShell(docker-compose build web-2 api api-2 2>&1)",
+      "PowerShell(docker-compose logs api --tail=30 2>&1)",
+      "PowerShell(docker-compose build api api-2 2>&1)",
+      "PowerShell(tail -20)",
+      "PowerShell(docker-compose up -d --force-recreate api api-2 2>&1)",
+      "PowerShell(docker-compose logs api --tail=20 2>&1)",
+      "PowerShell(docker-compose ps ollama-1 ollama-2 ollama-lb ollama-setup 2>&1)",
+      "PowerShell(docker-compose up -d ollama-1 ollama-2 2>&1)",
+      "PowerShell($maxWait = 60; $waited = 0; do { Start-Sleep -Seconds 5; $waited += 5; $status = docker inspect --format \"{{.State.Health.Status}}\" ground-zero-ollama-1-1 2>&1; Write-Host \"[$waited s] ollama-1: $status\" } while \\($status -ne \"healthy\" -and $waited -lt $maxWait\\))",
+      "PowerShell(docker-compose logs ollama-1 --tail=30 2>&1)",
+      "PowerShell(docker exec ground-zero-ollama-1-1 curl -sf http://localhost:11434/ 2>&1)",
+      "PowerShell(docker exec ground-zero-ollama-1-1 /bin/sh -c \"wget -qO- http://localhost:11434/ 2>&1 || ollama list 2>&1 || echo 'neither works'\")",
+      "PowerShell(docker-compose up -d --force-recreate ollama-1 ollama-2 2>&1)",
+      "PowerShell($maxWait = 60; $waited = 0; do { Start-Sleep -Seconds 5; $waited += 5; $s1 = docker inspect --format \"{{.State.Health.Status}}\" ground-zero-ollama-1-1 2>&1; $s2 = docker inspect --format \"{{.State.Health.Status}}\" ground-zero-ollama-2-1 2>&1; Write-Host \"[$waited s] ollama-1: $s1  ollama-2: $s2\" } while \\(\\($s1 -ne \"healthy\" -or $s2 -ne \"healthy\"\\) -and $waited -lt $maxWait\\))",
+      "PowerShell(docker-compose up -d ollama-lb ollama-setup 2>&1)",
+      "PowerShell($maxWait = 300; $waited = 0; do { Start-Sleep -Seconds 10; $waited += 10; $status = docker inspect --format \"{{.State.Status}}\" ground-zero-ollama-setup-1 2>&1; Write-Host \"[$waited s] setup: $status\" } while \\($status -eq \"running\" -and $waited -lt $maxWait\\); Write-Host \"Final status: $status\")",
+      "PowerShell(docker exec ground-zero-ollama-1-1 ollama list 2>&1)",
+      "PowerShell($body = '{\"model\":\"qwen2:0.5b\",\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}],\"stream\":false}'; $result = Invoke-RestMethod -Uri \"http://localhost:11434/api/chat\" -Method POST -Body $body -ContentType \"application/json\" -TimeoutSec 30; Write-Host $result.message.content)"
     ]
   }
 }

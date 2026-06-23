@@ -2,7 +2,7 @@
 
 Full-stack web application with a highly available, load-balanced container infrastructure.
 
-**Stack:** Next.js (frontend) · NestJS (API) · PostgreSQL · Redis · MinIO · RabbitMQ
+**Stack:** Next.js (frontend) · NestJS (API) · PostgreSQL · Redis · MinIO · RabbitMQ · Ollama (local AI)
 
 ---
 
@@ -38,6 +38,17 @@ Full-stack web application with a highly available, load-balanced container infr
         │  └────────────┘  │             │  └────────────┘  │
         └──────────────────┘             └────────┬─────────┘
                                                   │
+                               ┌──────────────────┴──────────────────┐
+                               │         ollama-lb (nginx)            │
+                               │         round-robin  :11434          │
+                               └────────┬──────────────────┬──────────┘
+                                        │                  │
+                               ┌────────▼──────┐  ┌────────▼──────┐
+                               │   ollama-1    │  │   ollama-2    │
+                               │  qwen2:0.5b   │  │  qwen2:0.5b   │
+                               │   :11434      │  │   :11434      │
+                               └───────────────┘  └───────────────┘
+                                        │
                                    ┌──────────────┴──────────────┐
                                    │       RabbitMQ fanout        │
                                    │   exchange: notes_events     │
@@ -118,18 +129,22 @@ Full-stack web application with a highly available, load-balanced container infr
 | `postgres-exporter` | prometheuscommunity/postgres-exporter | PostgreSQL metrics exporter | — |
 | `redis-exporter` | oliver006/redis_exporter | Redis metrics exporter | — |
 | `nginx-exporter` | nginx/nginx-prometheus-exporter | nginx metrics exporter | — |
+| `ollama-1` | ollama/ollama | Local LLM inference node 1 | — |
+| `ollama-2` | ollama/ollama | Local LLM inference node 2 | — |
+| `ollama-lb` | nginx:alpine | Ollama round-robin load balancer | 11434 |
+| `ollama-setup` | ollama/ollama | One-time model pull (exits after completion) | — |
 
 ---
 
 ## Startup order
 
 ```text
-redis-primary  db-primary  minio-1  minio-2  rabbitmq
-      │              │          └────┘           │
-      ▼              ▼          minio-lb          │
-redis-replica   db-secondary                     │
-      │         db-secondary-2                   │
-      ▼              │                           │
+redis-primary  db-primary  minio-1  minio-2  rabbitmq   ollama-1  ollama-2
+      │              │          └────┘           │              └────┘
+      ▼              ▼          minio-lb          │            ollama-lb
+redis-replica   db-secondary                     │           ollama-setup
+      │         db-secondary-2                   │                │
+      ▼              │                           │                │ (model pull, exits)
 redis-sentinel ×3    ▼                           │
       │          db-read-lb                      │
       ▼              │                           │
@@ -167,6 +182,7 @@ redis-sentinel ×3    ▼                           │
 | <http://localhost:9090> | Prometheus |
 | <http://localhost:3002> | Grafana dashboards |
 | <http://localhost:3001/metrics> | NestJS Prometheus metrics |
+| <http://localhost:11434> | Ollama API (via nginx LB) |
 
 ---
 
@@ -343,6 +359,7 @@ Google provider is activated conditionally — if either variable is absent, onl
 | --- | --- |
 | `/` | Notes list with create form |
 | `/users` | User management |
+| `/chat` | AI chat (streaming, via Ollama) |
 | `/profile` | Authenticated user's profile (read-only) |
 | `/reset-password` | Password reset (token from email) |
 
@@ -371,6 +388,49 @@ this.messaging.publish(JSON.stringify({
   severity: "info",   // success | error | info | warning
 }));
 ```
+
+---
+
+## AI Chat
+
+The `/chat` page streams responses from a local LLM running in Docker — no external API keys required.
+
+### Architecture
+
+```text
+Browser → POST /api/chat (NestJS)
+               │
+               ▼
+        ollama-lb (nginx, :11434)
+         round-robin
+        ┌──────┴──────┐
+        ▼             ▼
+    ollama-1      ollama-2
+   qwen2:0.5b    qwen2:0.5b
+```
+
+- `NestJS ChatController` receives `{ model, messages[] }`, proxies a streaming request to `ollama-lb`
+- Ollama streams NDJSON; NestJS parses each line and pipes `message.content` chunks to the client via `Transfer-Encoding: chunked`
+- The browser reads the response with a `ReadableStream` reader and appends each chunk in real-time
+- `OLLAMA_KEEP_ALIVE=-1` keeps the model loaded in memory permanently (no cold-start delay after the first request)
+
+### Model
+
+Default model: `qwen2:0.5b` (~352 MB). Runs on CPU. Replace with any model available on [ollama.com/library](https://ollama.com/library) by changing `OLLAMA_MODEL` in `docker-compose.yml` and re-running `ollama-setup`.
+
+```bash
+# Pull a different model manually
+docker exec ground-zero-ollama-1-1 ollama pull <model>
+docker exec ground-zero-ollama-2-1 ollama pull <model>
+```
+
+### Environment variables (AI)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `OLLAMA_URL` | `http://ollama-lb:11434` | Ollama endpoint (API containers) |
+| `OLLAMA_MODEL` | `qwen2:0.5b` | Default model used when none is specified in the request |
+| `NEXT_PUBLIC_OLLAMA_MODEL` | `qwen2:0.5b` | Model name shown in the chat UI chip |
 
 ---
 
@@ -406,3 +466,5 @@ In `--dev` mode (`docker-compose.dev.yml` overlay):
 | `MAIL_USER` | — | SMTP username (optional) |
 | `MAIL_PASS` | — | SMTP password (optional) |
 | `MAIL_FROM` | `noreply@localhost` | From address for outgoing emails |
+| `OLLAMA_URL` | `http://ollama-lb:11434` | Ollama API endpoint |
+| `OLLAMA_MODEL` | `qwen2:0.5b` | Default LLM model |

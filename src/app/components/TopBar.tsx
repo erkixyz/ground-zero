@@ -20,6 +20,7 @@ import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import StorageIcon from "@mui/icons-material/Storage";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArticleIcon from "@mui/icons-material/Article";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -113,6 +114,18 @@ export default function TopBar() {
             }}
           >
             {t.nav.users}
+          </Button>
+          <Button
+            component={Link}
+            href="/chat"
+            size="small"
+            startIcon={<SmartToyIcon />}
+            sx={{
+              color: pathname === "/chat" ? "primary.main" : "text.secondary",
+              fontWeight: pathname === "/chat" ? 700 : 400,
+            }}
+          >
+            {t.nav.chat}
           </Button>
 
           <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center" }}>
