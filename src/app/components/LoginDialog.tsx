@@ -124,6 +124,7 @@ export default function LoginDialog({ open, onClose }: Props) {
               </Typography>
               <Divider>{t.login.or}</Divider>
               <Button
+                type="button"
                 variant="outlined"
                 fullWidth
                 disabled={pending}

@@ -45,7 +45,20 @@
       "Bash(node -e \"require\\('/Users/erkik/Projects/ground-zero/backend/node_modules/connect-redis'\\)\")",
       "PowerShell(docker compose build 2>&1)",
       "Bash(Start-Sleep -Seconds 15)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(xargs grep -l \"guard\\\\|Guard\")",
+      "PowerShell(cmd /c \"dir c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\backend\\\\node_modules 2>&1 | head -10\")",
+      "PowerShell(cmd /c \"dir c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules\\\\better-auth 2>&1 | head -10\")",
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\" -Filter \"pnpm-lock.yaml\" -o -Filter \"yarn.lock\" -o -Filter \"package-lock.json\")",
+      "PowerShell(cmd /c \"dir /b c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\backend\\\\node_modules 2>&1\")",
+      "PowerShell(cmd /c \"where /r c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\backend better-auth 2>&1\")",
+      "PowerShell(cmd /c \"where /r c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\backend better-auth.js 2>&1\")",
+      "PowerShell(cmd /c \"dir c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules 2>&1\")",
+      "Bash(xargs grep -l \"signIn.*social\\\\|sign-in/social\")",
+      "Bash(dir \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules\\\\better-auth\")",
+      "Bash(dir \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\" /ad)",
+      "PowerShell($content = Get-Content \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\package-lock.json\" -Raw; $idx = $content.IndexOf\\('\"node_modules/better-auth\"'\\); $content.Substring\\($idx, 300\\))",
+      "PowerShell(\\(Get-ChildItem \"c:\\\\Users\\\\erkik\\\\Projects\\\\ground-zero\\\\node_modules\"\\).Count)"
     ]
   }
 }
