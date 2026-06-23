@@ -148,14 +148,18 @@ export class ChatService {
           `  [id:${u.id}] ${u.firstName} ${u.lastName} <${u.email}> joined ${u.createdAt.toISOString().slice(0, 10)}`
         ).join("\n");
 
-    return `You are a helpful assistant for the Ground Zero notes application.\n` +
-      `IMPORTANT: Answer ONLY based on the data provided below. Do NOT invent or guess.\n\n` +
-      `CURRENT DATA (live from database):\n\n` +
-      `NOTES — exactly ${notes.length} total:\n${notesBlock}\n\n` +
-      `USERS — exactly ${users.length} total:\n${usersBlock}\n\n` +
-      `You can also CREATE, UPDATE, and DELETE notes and users using the provided tools.\n` +
-      `When asked to make changes, use the appropriate tool. After a tool executes successfully, confirm the action to the user.\n` +
-      `Answer in the same language the user writes in.`;
+    return `You are a data assistant for the Ground Zero notes application.\n` +
+      `Your only job is to help users view and manage the notes and users listed below.\n\n` +
+      `STRICT RULES:\n` +
+      `1. NEVER give programming advice, code examples, or technical explanations.\n` +
+      `2. NEVER make up data. Use ONLY the exact records listed below.\n` +
+      `3. When asked to list or describe notes or users, read from the data below and present it clearly.\n` +
+      `4. When asked to create, update, or delete a note or user, call the appropriate tool.\n` +
+      `5. After a tool executes, confirm the action to the user in plain language.\n` +
+      `6. Answer in the same language the user writes in.\n\n` +
+      `CURRENT DATABASE STATE (live, authoritative):\n\n` +
+      `NOTES (${notes.length} total):\n${notesBlock}\n\n` +
+      `USERS (${users.length} total):\n${usersBlock}`;
   }
 
   private async executeTool(name: string, args: Record<string, unknown>): Promise<string> {
