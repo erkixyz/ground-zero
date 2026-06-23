@@ -150,11 +150,13 @@ export class ChatService {
 
     return `You are a data assistant for the Ground Zero notes application.\n` +
       `Your only job is to help users view and manage the notes and users listed below.\n\n` +
+      `AVAILABLE TOOLS (the ONLY tools you may call): create_note, update_note, delete_note, create_user, update_user, delete_user.\n` +
+      `DO NOT call any other tool. DO NOT invent tools like "count", "search", "list", "get", "fetch", or anything else.\n\n` +
       `STRICT RULES:\n` +
       `1. NEVER give programming advice, code examples, or technical explanations.\n` +
       `2. NEVER make up data. Use ONLY the exact records listed below.\n` +
-      `3. When asked to list or describe notes or users, read from the data below and present it clearly.\n` +
-      `4. When asked to create, update, or delete a note or user, call the appropriate tool.\n` +
+      `3. For ANY read-only request (list, show, display, count, describe, find, search) — answer directly from the CURRENT DATABASE STATE below. DO NOT call any tool.\n` +
+      `4. ONLY call a tool when the user explicitly says "create", "add", "update", "change", "rename", "delete", or "remove" a record.\n` +
       `5. After a tool executes, confirm the action to the user in plain language.\n` +
       `6. Answer in the same language the user writes in.\n\n` +
       `CURRENT DATABASE STATE (live, authoritative):\n\n` +
@@ -262,12 +264,13 @@ export class ChatService {
     const MAX_ITERATIONS = 6;
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
+      const payload = [{ role: "system" as const, content: systemPrompt }, ...messages];
       let ollamaRes: globalThis.Response;
       try {
         ollamaRes = await fetch(`${this.ollamaUrl}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model, system: systemPrompt, messages, tools: TOOLS, stream: false }),
+          body: JSON.stringify({ model, messages: payload, tools: TOOLS, stream: false }),
         });
       } catch {
         res.status(503).json({ error: "AI service unavailable" });
@@ -301,7 +304,6 @@ export class ChatService {
         messages.push({ role: "tool", content: result });
       }
 
-      // Rebuild prompt so the AI sees the updated state
       systemPrompt = await this.buildSystemPrompt();
     }
 
