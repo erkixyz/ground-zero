@@ -82,16 +82,6 @@ export default function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "";
   const serviceLinks = SERVICE_LINKS(t.services.infrastructure);

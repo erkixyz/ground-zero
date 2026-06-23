@@ -225,6 +225,18 @@ start-win.bat --dev
 stop-win.bat
 ```
 
+### Rebuild (force fresh images)
+
+Rebuilds all images from scratch (`--no-cache`) — use this when `node_modules`, Dockerfiles, or base images change and cached layers would produce a stale result.
+
+```bash
+# Mac / Linux
+./rebuild-mac.sh
+
+# Windows
+rebuild-win.bat
+```
+
 ### Logs
 
 ```bash
@@ -362,6 +374,18 @@ Google provider is activated conditionally — if either variable is absent, onl
 | `/chat` | AI chat (streaming, via Ollama) |
 | `/profile` | Authenticated user's profile (read-only) |
 | `/reset-password` | Password reset (token from email) |
+
+### Global search
+
+A full-text search dialog searches across both notes and users simultaneously.
+
+- Open with the **search icon** in the top bar
+- Results are grouped by type (Notes / Users) and limited to 5 per group
+- Matching text is highlighted inline; note snippets show context around the match
+- Navigate results with **↑ / ↓** arrow keys and confirm with **Enter**
+- Notes results navigate to `/`; user results navigate to `/users`
+
+**API endpoint:** `GET /api/search?q=<query>` — returns `{ notes: [...], users: [...] }`. Notes are matched against `title` and `content`; users against `firstName`, `lastName`, and `email` (all case-insensitive).
 
 ### Toast notifications
 

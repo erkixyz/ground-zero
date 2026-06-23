@@ -31,6 +31,15 @@ export class NotesController {
     return this.notesService.findAll();
   }
 
+  @ApiOperation({ summary: 'Get note by id' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ status: 200, type: NoteEntity })
+  @ApiResponse({ status: 404, description: 'Note not found' })
+  @Get(":id")
+  findOne(@Param("id", ParseIntPipe) id: number) {
+    return this.notesService.findOne(id);
+  }
+
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Create note', description: 'Session optional — if logged in, the note is attributed to the current user.' })
   @ApiBody({ type: CreateNoteDto })

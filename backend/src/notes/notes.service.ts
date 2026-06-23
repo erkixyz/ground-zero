@@ -34,6 +34,18 @@ export class NotesService {
     );
   }
 
+  async findOne(id: number) {
+    const note = await this.prisma.read.note.findUnique({
+      where: { id },
+      include: {
+        files: true,
+        author: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!note) throw new NotFoundException("Märget ei leitud");
+    return { ...note, files: await this.files.withUrls(note.files) };
+  }
+
   async create(title: string, content: string, category?: string, pinned?: boolean, authorId?: string) {
     this.logger.log(`Loon märget: "${title}" [kategooria=${category ?? "—"}, tähtsustatud=${pinned ?? false}, autor=${authorId ?? "anonüümne"}]`);
     const note = await this.prisma.write.note.create({

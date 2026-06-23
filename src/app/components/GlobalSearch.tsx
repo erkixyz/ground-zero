@@ -95,7 +95,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
   const flatPaths = useMemo<string[]>(() => {
     if (!results) return [];
     return [
-      ...results.notes.map(() => "/"),
+      ...results.notes.map((n) => `/notes/${n.id}`),
       ...results.users.map(() => "/users"),
     ];
   }, [results]);
@@ -194,9 +194,6 @@ export default function GlobalSearch({ open, onClose }: Props) {
             onKeyDown={handleKeyDown}
             sx={{ fontSize: 15 }}
           />
-          <Typography variant="caption" sx={{ color: "text.disabled", flexShrink: 0, fontFamily: "monospace" }}>
-            {t.search.shortcut}
-          </Typography>
         </Box>
 
         {query.trim() && (
@@ -223,7 +220,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
                         key={note.id}
                         ref={(el) => { itemRefs.current[i] = el; }}
                         selected={activeIndex === i}
-                        onClick={() => navigate("/")}
+                        onClick={() => navigate(`/notes/${note.id}`)}
                         onMouseMove={() => setActiveIndex(i)}
                       >
                         <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>

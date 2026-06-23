@@ -37,6 +37,8 @@ const translations = {
         muu: "Muu",
       },
       anonymous: "Anonüümne",
+      backToNotes: "Tagasi märkmetele",
+      notFound: "Märget ei leitud",
     },
     login: {
       title: "Logi sisse",
@@ -106,7 +108,6 @@ const translations = {
     },
     search: {
       placeholder: "Otsi märkmeid ja kasutajaid…",
-      shortcut: "Ctrl+K",
       notes: "Märkmed",
       users: "Kasutajad",
       noResults: "Tulemusi ei leitud",
@@ -153,6 +154,8 @@ const translations = {
         muu: "Other",
       },
       anonymous: "Anonymous",
+      backToNotes: "Back to notes",
+      notFound: "Note not found",
     },
     login: {
       title: "Log in",
@@ -222,7 +225,6 @@ const translations = {
     },
     search: {
       placeholder: "Search notes and users…",
-      shortcut: "Ctrl+K",
       notes: "Notes",
       users: "Users",
       noResults: "No results found",

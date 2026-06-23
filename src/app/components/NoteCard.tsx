@@ -11,6 +11,7 @@ import DeleteButton from "./DeleteButton";
 import SendNoteButton from "./SendNoteButton";
 import NoteFileChip from "./NoteFileChip";
 import { useLanguage } from "@/context/LanguageContext";
+import Link from "next/link";
 
 type NoteFile = {
   id: number;
@@ -39,12 +40,16 @@ export default function NoteCard({ note }: { note: Note }) {
     <Card sx={note.pinned ? { borderColor: "primary.dark", borderWidth: 1, borderStyle: "solid" } : {}}>
       <CardContent sx={{ pb: "12px !important" }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box
+            component={Link}
+            href={`/notes/${note.id}`}
+            sx={{ flex: 1, minWidth: 0, textDecoration: "none", color: "inherit", "&:hover .note-title": { color: "primary.main" } }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
               {note.pinned && (
                 <PushPinIcon sx={{ fontSize: 15, color: "primary.main", flexShrink: 0 }} />
               )}
-              <Typography sx={{ fontWeight: 600 }} noWrap>
+              <Typography className="note-title" sx={{ fontWeight: 600, transition: "color 0.15s" }} noWrap>
                 {note.title}
               </Typography>
             </Box>
