@@ -97,6 +97,18 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        before: async (user) => {
+          if (!user.firstName && !user.lastName && user.name) {
+            const parts = (user.name as string).trim().split(/\s+/);
+            return {
+              data: {
+                ...user,
+                firstName: parts[0] || "",
+                lastName: parts.slice(1).join(" ") || "",
+              },
+            };
+          }
+        },
         after: async (user) => {
           if (user.emailVerified) return;
           try {
