@@ -22,6 +22,7 @@ import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import LogoutIcon from "@mui/icons-material/Logout";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import SearchIcon from "@mui/icons-material/Search";
 import ArticleIcon from "@mui/icons-material/Article";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -168,6 +169,13 @@ export default function TopBar() {
 
             {user ? (
               <>
+                {!user.emailVerified && (
+                  <Tooltip title={t.emailVerification.unverified}>
+                    <IconButton size="small" sx={{ color: "warning.main" }} component={Link} href="/verify-email">
+                      <WarningAmberIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <Tooltip title={`${t.nav.profile} · ${user.firstName} ${user.lastName}`}>
                   <Avatar
                     component={Link}

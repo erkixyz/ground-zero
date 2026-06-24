@@ -9,9 +9,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
+  Res,
 } from "@nestjs/common";
-import { Request } from "express";
+import { Request, Response } from "express";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../auth/better-auth";
@@ -32,6 +34,20 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @ApiOperation({ summary: 'Verify email via token (redirect)' })
+  @ApiResponse({ status: 302, description: 'Redirect to callbackURL' })
+  @Get('verify-email')
+  async verifyEmail(
+    @Query('token') token: string,
+    @Query('callbackURL') callbackURL: string,
+    @Res() res: Response,
+  ) {
+    const safe = callbackURL || '/';
+    const separator = safe.includes('?') ? '&' : '?';
+    const ok = await this.usersService.doVerifyEmail(token ?? '');
+    return res.redirect(ok ? safe : `${safe}${separator}error=INVALID_TOKEN`);
+  }
+
   @ApiOperation({ summary: 'Get user by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 200, type: UserEntity })
@@ -39,6 +55,16 @@ export class UsersController {
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @ApiOperation({ summary: 'Resend email verification link' })
+  @ApiBody({ schema: { properties: { email: { type: 'string' } } } })
+  @ApiResponse({ status: 200 })
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body() body: { email: string }) {
+    await this.usersService.resendVerification(body.email ?? "");
+    return { ok: true };
   }
 
   @ApiOperation({ summary: 'Create user' })

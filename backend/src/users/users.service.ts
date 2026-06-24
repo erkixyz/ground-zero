@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { randomBytes } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { hashPassword } from "../auth/better-auth";
@@ -102,6 +103,42 @@ export class UsersService {
     }
 
     return updated;
+  }
+
+  async doVerifyEmail(token: string): Promise<boolean> {
+    const verification = await this.prisma.write.verification.findFirst({
+      where: { value: token },
+    });
+    if (!verification || verification.expiresAt < new Date()) return false;
+    await this.prisma.write.user.update({
+      where: { email: verification.identifier },
+      data: { emailVerified: true },
+    });
+    await this.prisma.write.verification.delete({ where: { id: verification.id } });
+    return true;
+  }
+
+  async resendVerification(email: string) {
+    const user = await this.prisma.write.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, emailVerified: true },
+    });
+    if (!user || user.emailVerified) return;
+
+    await this.prisma.write.verification.deleteMany({ where: { identifier: email.toLowerCase() } });
+
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await this.prisma.write.verification.create({
+      data: { identifier: email.toLowerCase(), value: token, expiresAt },
+    });
+
+    const appUrl = process.env.APP_URL || "http://localhost:3000";
+    const backendUrl = process.env.BETTER_AUTH_URL || process.env.APP_URL?.replace(/:\d+$/, ":3001") || "http://localhost:3001";
+    const callbackURL = encodeURIComponent(`${appUrl}/verify-email?verified=true`);
+    const verifyUrl = `${backendUrl}/api/users/verify-email?token=${token}&callbackURL=${callbackURL}`;
+
+    await this.mail.sendEmailVerification(email.toLowerCase(), verifyUrl);
   }
 
   async remove(id: string) {

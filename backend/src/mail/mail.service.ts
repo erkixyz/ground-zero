@@ -35,6 +35,19 @@ export class MailService {
     });
   }
 
+  async sendEmailVerification(email: string, verifyUrl: string) {
+    await this.mailer.sendMail({
+      to: email,
+      subject: "Kinnita oma e-posti aadress — Ground Zero",
+      html: `
+        <p>Tere,</p>
+        <p>Klõpsa allolevale lingile oma e-posti aadressi kinnitamiseks:</p>
+        <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+        <p>Kui sa seda kontot ei loonud, ignoreeri seda kirja.</p>
+      `,
+    });
+  }
+
   async sendNote(
     toEmail: string,
     note: {

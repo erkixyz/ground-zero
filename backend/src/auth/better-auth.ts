@@ -94,6 +94,41 @@ export const auth = betterAuth({
     },
   },
 
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if (user.emailVerified) return;
+          try {
+            const token = randomBytes(32).toString("hex");
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            await prisma.verification.create({
+              data: { identifier: user.email, value: token, expiresAt },
+            });
+            const appUrl = process.env.APP_URL || "http://localhost:3000";
+            const backendUrl = process.env.BETTER_AUTH_URL || process.env.APP_URL?.replace(/:\d+$/, ":3001") || "http://localhost:3001";
+            const callbackURL = encodeURIComponent(`${appUrl}/verify-email?verified=true`);
+            const verifyUrl = `${backendUrl}/api/users/verify-email?token=${token}&callbackURL=${callbackURL}`;
+            const mailer = createTransporter();
+            await mailer.sendMail({
+              from: process.env.MAIL_FROM || "noreply@localhost",
+              to: user.email,
+              subject: "Kinnita oma e-posti aadress — Ground Zero",
+              html: `
+                <p>Tere,</p>
+                <p>Klõpsa allolevale lingile oma e-posti aadressi kinnitamiseks:</p>
+                <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+                <p>Kui sa seda kontot ei loonud, ignoreeri seda kirja.</p>
+              `,
+            });
+          } catch (e) {
+            console.error("[auth] Failed to send verification email:", e);
+          }
+        },
+      },
+    },
+  },
+
   trustedOrigins: [process.env.CORS_ORIGIN || "http://localhost:3000"],
 
   advanced: {
