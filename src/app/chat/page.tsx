@@ -13,10 +13,12 @@ import Tooltip from "@mui/material/Tooltip";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
+import Chip from "@mui/material/Chip";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import HistoryIcon from "@mui/icons-material/History";
 
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
@@ -35,6 +37,7 @@ export default function ChatPage() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState(MODELS[0].id);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputHistoryRef = useRef<string[]>([]);
@@ -52,6 +55,7 @@ export default function ChatPage() {
       .then((data: { chatInputHistory?: string[] }) => {
         if (Array.isArray(data.chatInputHistory) && data.chatInputHistory.length > 0) {
           inputHistoryRef.current = data.chatInputHistory;
+          setInputHistory(data.chatInputHistory);
         }
       })
       .catch(() => {});
@@ -64,6 +68,7 @@ export default function ChatPage() {
     if (inputHistoryRef.current[inputHistoryRef.current.length - 1] !== text) {
       const updated = [...inputHistoryRef.current, text].slice(-HISTORY_LIMIT);
       inputHistoryRef.current = updated;
+      setInputHistory(updated);
       if (user?.id) {
         fetch(`${API_URL}/api/users/${user.id}`, {
           method: "PATCH",
@@ -274,6 +279,31 @@ export default function ChatPage() {
         ))}
         <div ref={bottomRef} />
       </Box>
+
+      {inputHistory.length > 0 && (
+        <Box sx={{ flexShrink: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75, color: "text.disabled" }}>
+            <HistoryIcon sx={{ fontSize: 14 }} />
+            <Typography variant="caption">Varasemad päringud</Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+            {[...inputHistory].reverse().slice(0, 12).map((item, i) => (
+              <Chip
+                key={i}
+                label={item.length > 48 ? item.slice(0, 47) + "…" : item}
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  setInput(item);
+                  historyIndexRef.current = -1;
+                }}
+                disabled={streaming}
+                sx={{ cursor: "pointer", maxWidth: 280, fontStyle: item.length > 48 ? "italic" : "normal" }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
 
       <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end", flexShrink: 0 }}>
         <TextField
