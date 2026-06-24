@@ -249,31 +249,116 @@ docker compose logs -f app-lb        # nginx LB
 
 ## Testing
 
-End-to-end tests run with [Playwright](https://playwright.dev) against the running Docker stack (`http://localhost:3000`).
+Projektil on kaks eraldi testistrateegiat: **unit testid** (ilma väliste sõltuvusteta) ja **E2E testid** (päris Docker stacki vastu).
 
-### Käivitamine
+---
+
+### Unit testid — Backend (Jest)
+
+Backend unit testid kasutavad [Jest](https://jestjs.io) + `@nestjs/testing` raamistikku. Kõik välised sõltuvused (andmebaas, RabbitMQ, MinIO, e-post) on mockitud — testid töötavad ilma Docker stackita.
+
+#### Käivitamine
+
+```bash
+cd backend
+npm test                # käivita kõik testid ühe korra
+npm run test:watch      # watch-režiim (jookseb uuesti muutustel)
+npm run test:coverage   # testid + katvusraport (backend/coverage/)
+```
+
+#### Testide struktuur
+
+```text
+backend/src/
+  notes/
+    notes.service.spec.ts      # NotesService — findAll, findOne, create, remove, sendByEmail
+    notes.controller.spec.ts   # NotesController — create (sessioon), sendByEmail, remove
+  users/
+    users.service.spec.ts      # UsersService — CRUD, verify email, resend verification, parool
+    users.controller.spec.ts   # UsersController — create, update, remove (self-delete kaitse), verify redirect
+  search/
+    search.service.spec.ts     # SearchService — tühi päring, tulemustest, väljad
+  files/
+    files.service.spec.ts      # FilesService — upload, remove, removeAllForNote, withUrls
+  mail/
+    mail.service.spec.ts       # MailService — kõik meilimallid ja manused
+  chat/
+    chat.service.spec.ts       # ChatService — tööriistade dispatcher, stream, Ollama mock
+  messaging/
+    messaging.service.spec.ts  # MessagingService — publish, sõnumite tarbimine, toast vs notesChanged
+```
+
+---
+
+### Unit testid — Frontend (Vitest)
+
+Frontend unit testid kasutavad [Vitest](https://vitest.dev) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) raamistikku. Next.js spetsiifilised moodulid (`next/navigation`, `next/cache` jne) on mockitud — testid töötavad ilma Next.js serverita.
+
+#### Käivitamine
+
+```bash
+# projekti juurkataloogist
+npm run test:unit           # käivita kõik unit testid ühe korra
+npm run test:unit:watch     # watch-režiim
+npm run test:unit:coverage  # testid + katvusraport (coverage/)
+```
+
+#### Testide struktuur
+
+```text
+src/__tests__/
+  setup.ts                            # @testing-library/jest-dom seadistus
+  i18n/
+    translations.test.ts              # Translations — struktuuri, keeled, kategooriad, locale koodid
+  context/
+    LanguageContext.test.tsx          # LanguageProvider — default locale, setLocale, localStorage persist
+  components/
+    DeleteButton.test.tsx             # DeleteButton — render, click → deleteNote, toast
+    NoteCard.test.tsx                 # NoteCard — pealkiri, sisu, autor, kategooria, failid
+    LoginDialog.test.tsx              # LoginDialog — login/register vaated, validatsioon, submit
+    GlobalSearch.utils.test.ts        # GlobalSearch puhased utiliidid: escapeRegExp, getSnippet
+  actions.test.ts                     # Server actions — createNote (validatsioon), sendNote, error handling
+```
+
+---
+
+### E2E testid — Playwright
+
+End-to-end testid jooksevad [Playwright](https://playwright.dev) abil päris Docker stacki vastu (`http://localhost:3000`).
+
+#### Eeldused
+
+Docker stack peab olema käivitatud enne E2E testide jooksutamist:
+
+```bash
+# Windows
+start-win.bat
+
+# Mac / Linux
+./start-mac.sh
+```
+
+#### Käivitamine
 
 | Käsk | Kirjeldus |
 | --- | --- |
-| `npm test` | Jookseb kõik testid terminalis, genereerib HTML raporti |
+| `npm test` | Jookseb kõik E2E testid terminalis |
 | `npm run test:ui` | Interaktiivne Playwright UI aken (testi valimine, trace, screenshots) |
 | `npm run test:report` | Jookseb testid + avab HTML raporti brauseris (`localhost:9323`) |
 | `npx playwright show-report` | Avab viimase raporti brauseris ilma teste uuesti jooksutamata |
 
-### Testide struktuur
+#### Testide struktuur
 
 ```text
 tests/
-  helpers.ts          # API abifunktsioonid (createTestNote, createTestUser, …)
+  helpers.ts          # API abifunktsioonid (createTestUser, deleteTestUser)
   home.spec.ts        # Avaleht — märkmete CRUD, kategooria, pinnitud
   navigation.spec.ts  # TopBar, navigatsioon, hamburgermenüü, README drawer
   auth.spec.ts        # Login/logout, vale parool, dialoog
   users.spec.ts       # Kasutajate haldus, kustutamise kinnitamine
 ```
 
-### Eeldused
-
-Docker stack peab olema käivitatud (`start-win.bat` / `start-mac.sh`) enne testide jooksutamist. Testid loovad ja koristasid testikasutaja (`playwright@test.local`) automaatselt `beforeAll`/`afterAll` haakides.
+Testid loovad ja koristavad testikasutaja (`playwright@test.local`) automaatselt `beforeAll`/`afterAll` haakides.
 
 ---
 
