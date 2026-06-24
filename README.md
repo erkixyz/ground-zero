@@ -363,6 +363,72 @@ Google provider is activated conditionally — if either variable is absent, onl
 
 ---
 
+## Backend
+
+### NestJS modules
+
+| Module | Controllers | Services | Responsibility |
+| --- | --- | --- | --- |
+| **AppModule** | `AppController` | — | Root module; registers all feature modules; configures Winston logging, global validation pipe, Prometheus interceptor |
+| **PrismaModule** *(global)* | — | `PrismaService` | PostgreSQL ORM; exposes `read` (replica via `DATABASE_REPLICA_URL`) and `write` (primary via `DATABASE_URL`) clients |
+| **AuthModule** | — (middleware) | — | Mounts [Better Auth](https://www.better-auth.com) at `/api/auth/*`; email/password + Google OAuth; Prisma session adapter |
+| **UsersModule** | `UsersController` | `UsersService` | User CRUD, email verification flow, profile & chat history updates |
+| **NotesModule** | `NotesController` | `NotesService` | Notes CRUD with category and pinning; email delivery of notes; broadcasts mutations via RabbitMQ |
+| **FilesModule** | `FilesController` | `FilesService` | Multipart file upload/download/delete; max 10 MB; files stored in MinIO; signed URLs for downloads |
+| **ChatModule** | `ChatController` | `ChatService` | Streaming LLM chat via Ollama; RAG context injection; tool-calling loop (max 6 iterations) |
+| **SearchModule** | `SearchController` | `SearchService` | Full-text search across notes (title, content) and users (name, email) |
+| **StorageModule** *(global)* | — | `StorageService` | S3-compatible MinIO wrapper; bucket initialisation; presigned URL generation |
+| **MessagingModule** *(global)* | — | `MessagingService` | RabbitMQ `notes_events` fanout exchange; publishes and consumes cross-instance events |
+| **EventsModule** *(global)* | — | `EventsGateway` | Socket.io WebSocket gateway; emits `notesChanged` and `toast` events to connected clients |
+| **MailModule** *(global)* | — | `MailService` | Nodemailer + Handlebars templates; SMTP / MailHog depending on environment |
+
+### API routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/hello` | Health check (returns status + timestamp) |
+| `GET` | `/api/notes` | List all notes (includes signed file URLs) |
+| `GET` | `/api/notes/:id` | Fetch single note |
+| `POST` | `/api/notes` | Create note |
+| `PATCH` | `/api/notes/:id` | Update note |
+| `DELETE` | `/api/notes/:id` | Delete note (cascades to files) |
+| `POST` | `/api/notes/:id/send` | Email note content + attachments to recipient |
+| `POST` | `/api/notes/:noteId/files` | Upload file to note (multipart, max 10 MB) |
+| `DELETE` | `/api/notes/:noteId/files/:fileId` | Delete note file |
+| `GET` | `/api/users` | List all users |
+| `GET` | `/api/users/:id` | Fetch user profile (includes `chatInputHistory`) |
+| `POST` | `/api/users` | Create user |
+| `PATCH` | `/api/users/:id` | Update user (profile fields + `chatInputHistory`) |
+| `DELETE` | `/api/users/:id` | Delete user (forbidden if self) |
+| `POST` | `/api/users/resend-verification` | Resend email verification link |
+| `GET` | `/api/users/verify-email` | Email verification redirect |
+| `POST` | `/api/chat` | Streaming LLM chat with tool-calling |
+| `GET` | `/api/search?q=` | Full-text search across notes and users |
+| `GET` | `/metrics` | Prometheus metrics (HTTP request counts and latencies) |
+| `*` | `/api/auth/*` | Better Auth — sign-in, sign-up, session, OAuth callback |
+| `GET` | `/docs` | Swagger UI — interactive API documentation |
+
+### Key backend packages
+
+| Package | Version | Purpose |
+| --- | --- | --- |
+| `@nestjs/core` | ^11 | Framework runtime |
+| `@nestjs/platform-express` | ^11 | Express HTTP adapter |
+| `@nestjs/websockets` + `@nestjs/platform-socket.io` | ^11 | WebSocket / Socket.io |
+| `@nestjs/swagger` | ^11 | OpenAPI docs generation |
+| `prisma` + `@prisma/client` | ^7.8 | PostgreSQL ORM with read/write splitting |
+| `better-auth` | ^1.6 | Auth (email/password + Google OAuth, session management) |
+| `connect-redis` + `redis` | ^9 / ^6 | Redis session store |
+| `amqplib` | ^2 | RabbitMQ AMQP client |
+| `socket.io` | ^4.8 | WebSocket server |
+| `@aws-sdk/client-s3` | ^3 | MinIO S3-compatible client |
+| `@nestjs-modules/mailer` + `nodemailer` | ^2.3 / ^9 | Email sending with Handlebars templates |
+| `nest-winston` + `winston` | ^1.10 / ^3 | Structured logging |
+| `prom-client` | ^15 | Prometheus metrics |
+| `class-validator` + `class-transformer` | ^0.15 | DTO validation |
+
+---
+
 ## Frontend features
 
 ### Pages
@@ -373,7 +439,7 @@ Google provider is activated conditionally — if either variable is absent, onl
 | `/notes/[id]` | Note detail view |
 | `/users` | User management |
 | `/users/[id]` | User detail view |
-| `/chat` | AI chat with RAG context and tool-calling |
+| `/chat` | AI chat with RAG context, tool-calling, and session input history |
 | `/profile` | Authenticated user's profile (read-only) |
 | `/reset-password` | Password reset (token from email) |
 
@@ -491,6 +557,20 @@ The model can call six tools to mutate data. Tool execution is handled entirely 
 >
 > **AI (to user):** Märge "Koosolek" on edukalt loodud (id: 42).
 
+### Input history
+
+The chat input field keeps a persistent per-user history of sent messages (up to 50 entries), stored in the database and loaded on sign-in.
+
+| Interaction | Behaviour |
+| --- | --- |
+| **↑** (cursor at start) | Fill input with the previous message |
+| **↑** (repeatedly) | Walk further back through history |
+| **↓** | Walk forward; restores the draft on reaching the end |
+| **Click a chip** | The last 12 entries are shown as clickable chips above the input — click any to pre-fill it |
+| Typing after navigation | Exits history navigation; chip list stays visible |
+
+History is saved server-side (`PATCH /api/users/:id` → `chatInputHistory` column) and survives page reloads, browser restarts, and multiple devices.
+
 ### Model
 
 Default model: `llama3.2:3b` (~2 GB). Runs on CPU; GPU-accelerated if available. Replace with any tool-calling-capable model from [ollama.com/library](https://ollama.com/library) by changing `OLLAMA_MODEL` in `docker-compose.yml` and re-running `ollama-setup`.
@@ -510,6 +590,22 @@ docker exec ground-zero-ollama-2-1 ollama pull <model>
 | `OLLAMA_URL` | `http://ollama-lb:11434` | Ollama endpoint (API containers) |
 | `OLLAMA_MODEL` | `llama3.2:3b` | Default model used when none is specified in the request |
 | `NEXT_PUBLIC_OLLAMA_MODEL` | `llama3.2:3b` | Model name shown in the chat UI |
+
+---
+
+## Frontend stack
+
+| Package | Version | Purpose |
+| --- | --- | --- |
+| `next` | 16.2.9 | React framework (App Router, SSR) |
+| `react` | 19.2.4 | UI runtime |
+| `@mui/material` + `@mui/icons-material` | ^9.1 | Material Design component library |
+| `@emotion/react` + `@emotion/styled` | ^11 | CSS-in-JS (MUI peer dep) |
+| `tailwindcss` | ^4 | Utility-first CSS |
+| `better-auth` | ^1.6 | Auth client (pairs with backend session) |
+| `socket.io-client` | ^4.8 | WebSocket client for real-time note events |
+| `react-markdown` + `remark-gfm` | ^10 / ^4 | Markdown rendering |
+| `@playwright/test` | ^1.61 | End-to-end testing |
 
 ---
 
