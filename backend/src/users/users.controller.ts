@@ -95,6 +95,7 @@ export class UsersController {
       lastName: dto.lastName?.trim() || undefined,
       email: dto.email?.trim().toLowerCase() || undefined,
       password: dto.password || undefined,
+      chatInputHistory: dto.chatInputHistory,
     });
   }
 

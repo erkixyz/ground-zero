@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useAuth } from "../components/AuthProvider";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -20,6 +21,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const HISTORY_LIMIT = 50;
 
 const MODELS = [
   { id: "llama3.2:3b", label: "Llama 3.2 3B", hint: "eesti keel" },
@@ -27,6 +29,7 @@ const MODELS = [
 ];
 
 export default function ChatPage() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -34,14 +37,44 @@ export default function ChatPage() {
   const [model, setModel] = useState(MODELS[0].id);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const inputHistoryRef = useRef<string[]>([]);
+  const historyIndexRef = useRef(-1);
+  const savedInputRef = useRef("");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`${API_URL}/api/users/${user.id}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { chatInputHistory?: string[] }) => {
+        if (Array.isArray(data.chatInputHistory) && data.chatInputHistory.length > 0) {
+          inputHistoryRef.current = data.chatInputHistory;
+        }
+      })
+      .catch(() => {});
+  }, [user?.id]);
+
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || streaming) return;
+
+    if (inputHistoryRef.current[inputHistoryRef.current.length - 1] !== text) {
+      const updated = [...inputHistoryRef.current, text].slice(-HISTORY_LIMIT);
+      inputHistoryRef.current = updated;
+      if (user?.id) {
+        fetch(`${API_URL}/api/users/${user.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ chatInputHistory: updated }),
+        }).catch(() => {});
+      }
+    }
+    historyIndexRef.current = -1;
+    savedInputRef.current = "";
 
     const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text };
     const history = [...messages, userMsg];
@@ -96,12 +129,38 @@ export default function ChatPage() {
       setStreaming(false);
       abortRef.current = null;
     }
-  }, [input, messages, streaming]);
+  }, [input, messages, streaming, user]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      return;
+    }
+
+    const ta = e.target as HTMLTextAreaElement;
+
+    if (e.key === "ArrowUp") {
+      const cursorAtStart = ta.selectionStart === 0 && ta.selectionEnd === 0;
+      if (cursorAtStart || historyIndexRef.current > -1) {
+        if (historyIndexRef.current === -1) savedInputRef.current = input;
+        const hist = inputHistoryRef.current;
+        if (historyIndexRef.current < hist.length - 1) {
+          historyIndexRef.current++;
+          setInput(hist[hist.length - 1 - historyIndexRef.current]);
+        }
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown" && historyIndexRef.current > -1) {
+      historyIndexRef.current--;
+      const hist = inputHistoryRef.current;
+      setInput(historyIndexRef.current === -1
+        ? savedInputRef.current
+        : hist[hist.length - 1 - historyIndexRef.current]);
+      e.preventDefault();
     }
   };
 
@@ -224,7 +283,10 @@ export default function ChatPage() {
           size="small"
           placeholder="Kirjuta sõnum… (Enter saadab, Shift+Enter uus rida)"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            historyIndexRef.current = -1;
+          }}
           onKeyDown={handleKeyDown}
           disabled={streaming}
         />

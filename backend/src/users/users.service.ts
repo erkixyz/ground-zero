@@ -12,6 +12,11 @@ const userSelect = {
   createdAt: true,
 };
 
+const userDetailSelect = {
+  ...userSelect,
+  chatInputHistory: true,
+};
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -27,9 +32,12 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.read.user.findUnique({ where: { id }, select: userSelect });
+    const user = await this.prisma.read.user.findUnique({ where: { id }, select: userDetailSelect });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
-    return user;
+    return {
+      ...user,
+      chatInputHistory: user.chatInputHistory ? (JSON.parse(user.chatInputHistory) as string[]) : [],
+    };
   }
 
   async create(data: { firstName: string; lastName: string; email: string; password: string }) {
@@ -61,7 +69,7 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, data: { firstName?: string; lastName?: string; email?: string; password?: string }) {
+  async update(id: string, data: { firstName?: string; lastName?: string; email?: string; password?: string; chatInputHistory?: string[] }) {
     const user = await this.prisma.write.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
 
@@ -69,6 +77,7 @@ export class UsersService {
     if (data.firstName) updateData.firstName = data.firstName;
     if (data.lastName) updateData.lastName = data.lastName;
     if (data.email) updateData.email = data.email;
+    if (data.chatInputHistory !== undefined) updateData.chatInputHistory = JSON.stringify(data.chatInputHistory);
 
     if (data.firstName || data.lastName) {
       updateData.name = `${data.firstName ?? user.firstName} ${data.lastName ?? user.lastName}`.trim();

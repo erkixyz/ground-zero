@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'John' })
@@ -22,4 +22,10 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(6, { message: 'Parool peab olema vähemalt 6 tähemärki' })
   password?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  chatInputHistory?: string[];
 }

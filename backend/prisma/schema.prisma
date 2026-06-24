@@ -16,9 +16,10 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  firstName     String    @default("")
-  lastName      String    @default("")
-  createdAt     DateTime  @default(now())
+  firstName        String    @default("")
+  lastName         String    @default("")
+  chatInputHistory String?
+  createdAt        DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   notes         Note[]
   sessions      Session[]
