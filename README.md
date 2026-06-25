@@ -436,6 +436,20 @@ Google provider is activated conditionally — if either variable is absent, onl
 
 **Sessions** are cookie-based (`gz.session_token`), stored in PostgreSQL via the Prisma adapter. Secure cookies are enabled in production (`NODE_ENV=production`).
 
+### User Roles
+
+Every user account has a role: `USER` (Tavakasutaja) or `ADMIN` (Admin).
+
+| Rule | Detail |
+| --- | --- |
+| Self-registration | Always creates a `USER` — role cannot be chosen during registration |
+| First user | If the system has **no users yet**, the first registration automatically receives `ADMIN` and the role is locked |
+| Admin creates user | Admins can set the role to `USER` or `ADMIN` when creating a user via the Users admin panel |
+| Changing roles | Only an `ADMIN` can change another user's role (`PATCH /api/users/:id/role`) |
+| Self-role change | Admins cannot change their **own** role |
+| Last admin protection | Demoting the only remaining admin to `USER` is blocked |
+| Frontend access | The `/users` page and all user-management actions are restricted to admins; non-admins see a warning |
+
 ---
 
 ## Backend
@@ -447,7 +461,7 @@ Google provider is activated conditionally — if either variable is absent, onl
 | **AppModule** | `AppController` | — | Root module; registers all feature modules; configures Winston logging, global validation pipe, Prometheus interceptor |
 | **PrismaModule** *(global)* | — | `PrismaService` | PostgreSQL ORM; exposes `read` (replica via `DATABASE_REPLICA_URL`) and `write` (primary via `DATABASE_URL`) clients |
 | **AuthModule** | — (middleware) | — | Mounts [Better Auth](https://www.better-auth.com) at `/api/auth/*`; email/password + Google OAuth; Prisma session adapter |
-| **UsersModule** | `UsersController` | `UsersService` | User CRUD, email verification flow, profile & chat history updates |
+| **UsersModule** | `UsersController` | `UsersService` | User CRUD, email verification flow, profile & chat history updates; role management (`USER`/`ADMIN`) |
 | **NotesModule** | `NotesController` | `NotesService` | Notes CRUD with category and pinning; email delivery of notes; broadcasts mutations via RabbitMQ |
 | **FilesModule** | `FilesController` | `FilesService` | Multipart file upload/download/delete; max 10 MB; files stored in MinIO; signed URLs for downloads |
 | **ChatModule** | `ChatController` | `ChatService` | Streaming LLM chat via Ollama; RAG context injection; tool-calling loop (max 6 iterations) |
@@ -472,8 +486,9 @@ Google provider is activated conditionally — if either variable is absent, onl
 | `DELETE` | `/api/notes/:noteId/files/:fileId` | Delete note file |
 | `GET` | `/api/users` | List all users |
 | `GET` | `/api/users/:id` | Fetch user profile (includes `chatInputHistory`) |
-| `POST` | `/api/users` | Create user |
+| `POST` | `/api/users` | Create user (admin can set `role`; first user is always `ADMIN`) |
 | `PATCH` | `/api/users/:id` | Update user (profile fields + `chatInputHistory`) |
+| `PATCH` | `/api/users/:id/role` | Update user role — admin only; cannot change own role; last admin protected |
 | `DELETE` | `/api/users/:id` | Delete user (forbidden if self) |
 | `POST` | `/api/users/resend-verification` | Resend email verification link |
 | `GET` | `/api/users/verify-email` | Email verification redirect |
@@ -512,7 +527,7 @@ Google provider is activated conditionally — if either variable is absent, onl
 | --- | --- |
 | `/` | Notes list with create form |
 | `/notes/[id]` | Note detail view |
-| `/users` | User management |
+| `/users` | User management — **admin only** |
 | `/users/[id]` | User detail view |
 | `/chat` | AI chat with RAG context, tool-calling, and session input history |
 | `/profile` | Authenticated user's profile (read-only) |

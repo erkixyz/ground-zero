@@ -13,6 +13,9 @@ export class UserEntity {
   @ApiProperty({ example: 'john@example.com' })
   email: string;
 
+  @ApiProperty({ enum: ['USER', 'ADMIN'] })
+  role: string;
+
   @ApiProperty()
   createdAt: Date;
 }

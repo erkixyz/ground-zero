@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authClient } from "../auth-client";
 
-type User = { id: string; firstName: string; lastName: string; email: string; emailVerified: boolean };
+type User = { id: string; firstName: string; lastName: string; email: string; emailVerified: boolean; role: "ADMIN" | "USER" };
 
 type AuthContextType = {
   user: User | null;
@@ -29,6 +29,7 @@ function toUser(u: { id: string; name: string; email: string; [key: string]: unk
     lastName: (u.lastName as string) || u.name.split(" ").slice(1).join(" ") || "",
     email: u.email,
     emailVerified: (u.emailVerified as boolean) ?? false,
+    role: ((u.role as string) === "ADMIN" ? "ADMIN" : "USER") as "ADMIN" | "USER",
   };
 }
 

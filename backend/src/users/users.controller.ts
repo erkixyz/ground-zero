@@ -12,6 +12,7 @@ import {
   Query,
   Req,
   Res,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
@@ -21,6 +22,7 @@ import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserEntity } from "../auth/entities/user.entity";
+import { Role } from "../generated/prisma/client";
 
 @ApiTags('users')
 @Controller("users")
@@ -74,12 +76,21 @@ export class UsersController {
   @ApiResponse({ status: 409, description: 'Email already exists' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateUserDto) {
+  async create(@Body() dto: CreateUserDto, @Req() req: Request) {
+    let role: Role | undefined;
+    if (dto.role) {
+      const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+      if (!session?.user) throw new UnauthorizedException("Autentimine kohustuslik rolli määramiseks");
+      const requesterRole = await this.usersService.getRole(session.user.id);
+      if (requesterRole !== Role.ADMIN) throw new ForbiddenException("Ainult admin saab rolli määrata");
+      role = dto.role as Role;
+    }
     return this.usersService.create({
       firstName: dto.firstName.trim(),
       lastName: dto.lastName.trim(),
       email: dto.email.trim().toLowerCase(),
       password: dto.password,
+      role,
     });
   }
 
@@ -97,6 +108,24 @@ export class UsersController {
       password: dto.password || undefined,
       chatInputHistory: dto.chatInputHistory,
     });
+  }
+
+  @ApiOperation({ summary: 'Update user role (admin only)' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({ schema: { properties: { role: { type: 'string', enum: ['USER', 'ADMIN'] } } } })
+  @ApiResponse({ status: 200, type: UserEntity })
+  @ApiResponse({ status: 403, description: 'Not admin or cannot change own role' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @Patch(":id/role")
+  async updateRole(@Param("id") id: string, @Body() body: { role: string }, @Req() req: Request) {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    if (!session?.user) throw new UnauthorizedException("Autentimine kohustuslik");
+    const requesterRole = await this.usersService.getRole(session.user.id);
+    if (requesterRole !== Role.ADMIN) throw new ForbiddenException("Ainult admin saab rolle muuta");
+    if (body.role !== Role.ADMIN && body.role !== Role.USER) {
+      throw new ForbiddenException("Vigane rolli väärtus");
+    }
+    return this.usersService.updateRole(id, body.role as Role, session.user.id);
   }
 
   @ApiOperation({ summary: 'Delete user' })

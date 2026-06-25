@@ -18,6 +18,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
+import Alert from "@mui/material/Alert";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
@@ -30,6 +32,7 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function UsersClient({ users }: { users: UserRow[] }) {
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
+  const isAdmin = currentUser?.role === "ADMIN";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
@@ -55,6 +58,14 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
     });
   };
 
+  if (!isAdmin) {
+    return (
+      <Alert severity="warning" sx={{ mt: 2 }}>
+        {t.users.adminOnly}
+      </Alert>
+    );
+  }
+
   return (
     <>
       <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
@@ -75,6 +86,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                 <TableCell>{t.users.firstName}</TableCell>
                 <TableCell>{t.users.lastName}</TableCell>
                 <TableCell>{t.users.email}</TableCell>
+                <TableCell>{t.users.role}</TableCell>
                 <TableCell>{t.users.added}</TableCell>
                 <TableCell align="right">{t.users.actions}</TableCell>
               </TableRow>
@@ -98,6 +110,14 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                       <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                         {user.email}
                       </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={user.role === "ADMIN" ? t.users.roleAdmin : t.users.roleUser}
+                        size="small"
+                        color={user.role === "ADMIN" ? "primary" : "default"}
+                        variant={user.role === "ADMIN" ? "filled" : "outlined"}
+                      />
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>
                       <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>

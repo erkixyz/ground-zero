@@ -41,7 +41,13 @@ export default function ProfilePage() {
                 <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                   {fullName || "—"}
                 </Typography>
-                <Chip label={t.profile.role} size="small" variant="outlined" sx={{ mt: 0.5, fontSize: 11 }} />
+                <Chip
+                  label={user.role === "ADMIN" ? t.profile.roleAdmin : t.profile.roleUser}
+                  size="small"
+                  color={user.role === "ADMIN" ? "primary" : "default"}
+                  variant={user.role === "ADMIN" ? "filled" : "outlined"}
+                  sx={{ mt: 0.5, fontSize: 11 }}
+                />
               </Box>
             </Stack>
 

@@ -91,6 +91,7 @@ export const auth = betterAuth({
     additionalFields: {
       firstName: { type: "string", required: false, defaultValue: "" },
       lastName: { type: "string", required: false, defaultValue: "" },
+      role: { type: "string", required: false, defaultValue: "USER" },
     },
   },
 
@@ -98,16 +99,21 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
+          const count = await prisma.user.count();
+          const role = count === 0 ? "ADMIN" : "USER";
+
           if (!user.firstName && !user.lastName && user.name) {
             const parts = (user.name as string).trim().split(/\s+/);
             return {
               data: {
                 ...user,
+                role,
                 firstName: parts[0] || "",
                 lastName: parts.slice(1).join(" ") || "",
               },
             };
           }
+          return { data: { ...user, role } };
         },
         after: async (user) => {
           if (user.emailVerified) return;

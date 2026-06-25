@@ -10,6 +10,10 @@ import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { createUser, updateUser, UserFormState } from "../actions";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -19,6 +23,7 @@ export type UserRow = {
   lastName: string;
   email: string;
   createdAt: string;
+  role: "ADMIN" | "USER";
 };
 
 type Props = {
@@ -80,6 +85,17 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
               required={!isEdit}
               fullWidth
             />
+            <FormControl fullWidth size="small">
+              <InputLabel>{t.users.role}</InputLabel>
+              <Select
+                name="role"
+                label={t.users.role}
+                defaultValue={user?.role ?? "USER"}
+              >
+                <MenuItem value="USER">{t.users.roleUser}</MenuItem>
+                <MenuItem value="ADMIN">{t.users.roleAdmin}</MenuItem>
+              </Select>
+            </FormControl>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

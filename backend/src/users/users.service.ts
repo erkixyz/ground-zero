@@ -1,14 +1,16 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { randomBytes } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { hashPassword } from "../auth/better-auth";
+import { Role } from "../generated/prisma/client";
 
 const userSelect = {
   id: true,
   firstName: true,
   lastName: true,
   email: true,
+  role: true,
   createdAt: true,
 };
 
@@ -40,9 +42,12 @@ export class UsersService {
     };
   }
 
-  async create(data: { firstName: string; lastName: string; email: string; password: string }) {
+  async create(data: { firstName: string; lastName: string; email: string; password: string; role?: Role }) {
     const existing = await this.prisma.write.user.findUnique({ where: { email: data.email } });
     if (existing) throw new ConflictException("Selle e-postiga kasutaja on juba olemas");
+
+    const count = await this.prisma.read.user.count();
+    const role: Role = count === 0 ? Role.ADMIN : (data.role ?? Role.USER);
 
     const hashedPw = hashPassword(data.password);
     const name = `${data.firstName} ${data.lastName}`.trim();
@@ -54,6 +59,7 @@ export class UsersService {
         name,
         email: data.email,
         emailVerified: true,
+        role,
         accounts: {
           create: {
             accountId: data.email,
@@ -148,6 +154,29 @@ export class UsersService {
     const verifyUrl = `${backendUrl}/api/users/verify-email?token=${token}&callbackURL=${callbackURL}`;
 
     await this.mail.sendEmailVerification(email.toLowerCase(), verifyUrl);
+  }
+
+  async getRole(id: string): Promise<Role | null> {
+    const user = await this.prisma.read.user.findUnique({ where: { id }, select: { role: true } });
+    return user?.role ?? null;
+  }
+
+  async updateRole(id: string, role: Role, requestingUserId: string) {
+    if (id === requestingUserId) throw new ForbiddenException("Ei saa oma rolli muuta");
+
+    const user = await this.prisma.write.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException("Kasutajat ei leitud");
+
+    if (role === Role.USER) {
+      const adminCount = await this.prisma.read.user.count({ where: { role: Role.ADMIN } });
+      if (adminCount <= 1) throw new ForbiddenException("Süsteemis peab olema vähemalt üks Admin");
+    }
+
+    return this.prisma.write.user.update({
+      where: { id },
+      data: { role },
+      select: userSelect,
+    });
   }
 
   async remove(id: string) {

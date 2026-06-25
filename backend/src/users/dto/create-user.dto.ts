@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'John' })
@@ -20,4 +20,9 @@ export class CreateUserDto {
   @IsString()
   @MinLength(6, { message: 'Parool peab olema vähemalt 6 tähemärki' })
   password: string;
+
+  @ApiPropertyOptional({ enum: ['USER', 'ADMIN'], example: 'USER' })
+  @IsOptional()
+  @IsEnum(['USER', 'ADMIN'], { message: 'Roll peab olema USER või ADMIN' })
+  role?: string;
 }
