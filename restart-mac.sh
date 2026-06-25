@@ -6,12 +6,20 @@ if ! docker info > /dev/null 2>&1; then
   exit 1
 fi
 
+GPU_FLAGS=()
+if command -v nvidia-smi > /dev/null 2>&1 && nvidia-smi > /dev/null 2>&1; then
+  echo "NVIDIA GPU tuvastatud - kasutan GPU kiirendust"
+  GPU_FLAGS=(-f docker-compose.gpu.yml)
+else
+  echo "NVIDIA GPU-d ei leitud - kasutan CPU-d"
+fi
+
 echo "Peatan teenused..."
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
 
 echo ""
 echo "Käivitan ARENDUS-režiimis..."
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml "${GPU_FLAGS[@]}" up --build -d
 
 echo ""
 echo "Teenused on käivitatud:"

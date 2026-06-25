@@ -201,7 +201,7 @@ redis-sentinel ×3    ▼                           │
 
 ## Usage
 
-### Production
+### Start / Stop
 
 ```bash
 # Mac / Linux
@@ -213,17 +213,7 @@ start-win.bat
 stop-win.bat
 ```
 
-### Development
-
-```bash
-# Mac / Linux — mounts source into containers, enables hot reload
-./start-mac.sh --dev
-./stop-mac.sh
-
-# Windows
-start-win.bat --dev
-stop-win.bat
-```
+Skriptid käivitavad alati `docker-compose.dev.yml` overlay'ga (hot reload, volume mounts). GPU tuvastatakse automaatselt — kui `nvidia-smi` on kättesaadav ja töötab, lisatakse `docker-compose.gpu.yml` override (Ollama GPU kiirendus). Ilma NVIDIA GPU-ta käib Ollama CPU peal.
 
 ### Rebuild (force fresh images)
 
@@ -257,7 +247,7 @@ Projektil on kaks eraldi testistrateegiat: **unit testid** (ilma väliste sõltu
 
 Backend unit testid kasutavad [Jest](https://jestjs.io) + `@nestjs/testing` raamistikku. Kõik välised sõltuvused (andmebaas, RabbitMQ, MinIO, e-post) on mockitud — testid töötavad ilma Docker stackita.
 
-#### Käivitamine
+#### Jest käivitamine
 
 ```bash
 cd backend
@@ -294,7 +284,7 @@ backend/src/
 
 Frontend unit testid kasutavad [Vitest](https://vitest.dev) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) raamistikku. Next.js spetsiifilised moodulid (`next/navigation`, `next/cache` jne) on mockitud — testid töötavad ilma Next.js serverita.
 
-#### Käivitamine
+#### Vitest käivitamine
 
 ```bash
 # projekti juurkataloogist
@@ -303,7 +293,7 @@ npm run test:unit:watch     # watch-režiim
 npm run test:unit:coverage  # testid + katvusraport (coverage/)
 ```
 
-#### Testide struktuur
+#### Frontend testide struktuur
 
 ```text
 src/__tests__/
@@ -338,7 +328,7 @@ start-win.bat
 ./start-mac.sh
 ```
 
-#### Käivitamine
+#### Playwright käivitamine
 
 | Käsk | Kirjeldus |
 | --- | --- |
@@ -347,7 +337,7 @@ start-win.bat
 | `npm run test:report` | Jookseb testid + avab HTML raporti brauseris (`localhost:9323`) |
 | `npx playwright show-report` | Avab viimase raporti brauseris ilma teste uuesti jooksutamata |
 
-#### Testide struktuur
+#### E2E testide struktuur
 
 ```text
 tests/
@@ -572,7 +562,7 @@ this.messaging.publish(JSON.stringify({
 
 The `/chat` page connects to a local LLM running in Docker — no external API keys required. The AI has live read access to the database and can create, update, and delete both notes and users.
 
-### Architecture
+### Chat arhitektuur
 
 ```text
 Browser → POST /api/chat (NestJS)
@@ -600,7 +590,7 @@ Browser → POST /api/chat (NestJS)
 
 Before every request NestJS fetches all notes and users from the database and injects them as a system prompt. This gives the model an accurate, up-to-date view of the data without any vector search or embeddings.
 
-```
+```text
 NOTES — exactly N total:
   [id:1] "Title" — Author Name (category, pinned)
   Content preview (first 300 chars)…

@@ -7,12 +7,21 @@ if errorlevel 1 (
   exit /b 1
 )
 
+set GPU_FLAG=
+nvidia-smi > nul 2>&1
+if errorlevel 1 (
+  echo NVIDIA GPU-d ei leitud - kasutan CPU-d
+) else (
+  echo NVIDIA GPU tuvastatud - kasutan GPU kiirendust
+  set GPU_FLAG=-f docker-compose.gpu.yml
+)
+
 echo Peatan teenused...
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
 
 echo.
 echo Kaivitan ARENDUS-reziimis...
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml %GPU_FLAG% up --build -d
 
 echo.
 echo Teenused on kaivitatud:
