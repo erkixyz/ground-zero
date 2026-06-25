@@ -33,6 +33,13 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
   const isAdmin = currentUser?.role === "ADMIN";
+  const adminCount = users.filter((u) => u.role === "ADMIN").length;
+  const canEditRoleFor = (u: UserRow | null) => {
+    if (u === null) return true; // uue kasutaja loomisel admin valib rolli vabalt
+    if (u.id === currentUser?.id) return false; // ei saa oma rolli muuta
+    if (u.role === "ADMIN" && adminCount <= 1) return false; // ei saa viimast admini alandada
+    return true;
+  };
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
@@ -150,7 +157,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
         </TableContainer>
       )}
 
-      <UserFormDialog open={dialogOpen} user={editingUser} onClose={closeDialog} />
+      <UserFormDialog open={dialogOpen} user={editingUser} onClose={closeDialog} canEditRole={canEditRoleFor(editingUser)} />
 
       <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>{t.users.deleteTitle}</DialogTitle>

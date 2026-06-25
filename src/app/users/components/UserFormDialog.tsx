@@ -30,9 +30,10 @@ type Props = {
   open: boolean;
   user: UserRow | null;
   onClose: () => void;
+  canEditRole?: boolean;
 };
 
-export default function UserFormDialog({ open, user, onClose }: Props) {
+export default function UserFormDialog({ open, user, onClose, canEditRole = true }: Props) {
   const { t } = useLanguage();
   const isEdit = user !== null;
 
@@ -85,7 +86,7 @@ export default function UserFormDialog({ open, user, onClose }: Props) {
               required={!isEdit}
               fullWidth
             />
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" disabled={!canEditRole}>
               <InputLabel>{t.users.role}</InputLabel>
               <Select
                 name="role"
