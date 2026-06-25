@@ -43,7 +43,7 @@ test.describe("Kasutajate haldus", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.getByLabel("Eesnimi").fill("Uus");
-    await dialog.getByLabel("Perenimi").fill("Kasutaja");
+    await dialog.getByLabel("Perekonnanimi").fill("Kasutaja");
     await dialog.getByLabel("E-post").fill(email);
     await dialog.getByLabel("Parool").fill("Parool1234!");
     await dialog.getByRole("button", { name: /salvesta|lisa/i }).click();

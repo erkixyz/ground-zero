@@ -23,12 +23,12 @@ test.describe("Navigatsioon ja TopBar", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Teenused" }).click();
 
-    await expect(page.getByText("Grafana")).toBeVisible();
-    await expect(page.getByText("Prometheus")).toBeVisible();
-    await expect(page.getByText("Loki")).toBeVisible();
-    await expect(page.getByText("RabbitMQ")).toBeVisible();
-    await expect(page.getByText("MinIO")).toBeVisible();
-    await expect(page.getByText("Swagger UI")).toBeVisible();
+    await expect(page.getByText("Grafana", { exact: true })).toBeVisible();
+    await expect(page.getByText("Prometheus", { exact: true })).toBeVisible();
+    await expect(page.getByText("Loki", { exact: true })).toBeVisible();
+    await expect(page.getByText("RabbitMQ", { exact: true })).toBeVisible();
+    await expect(page.getByText("MinIO", { exact: true })).toBeVisible();
+    await expect(page.getByText("Swagger UI", { exact: true })).toBeVisible();
   });
 
   test("hamburgermenüü Grafana link on korrektne", async ({ page }) => {
@@ -43,10 +43,10 @@ test.describe("Navigatsioon ja TopBar", () => {
   test("hamburgermenüü sulgub Escape klahviga", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Teenused" }).click();
-    await expect(page.getByText("Grafana")).toBeVisible();
+    await expect(page.getByText("Grafana", { exact: true })).toBeVisible();
 
     await page.keyboard.press("Escape");
-    await expect(page.getByText("Grafana")).not.toBeVisible();
+    await expect(page.getByText("Grafana", { exact: true })).not.toBeVisible();
   });
 
   test("README drawer avaneb", async ({ page }) => {
