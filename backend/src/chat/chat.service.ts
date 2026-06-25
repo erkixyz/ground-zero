@@ -4,6 +4,8 @@ import { ChatDto } from "./dto/chat.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { hashPassword } from "../auth/better-auth";
 
+type Caller = { id: string; role: string } | null;
+
 interface OllamaMessage {
   role: "user" | "assistant" | "tool";
   content: string;
@@ -339,7 +341,9 @@ export class ChatService {
     return `${count} user(s) total.`;
   }
 
-  private async createUser(args: Record<string, unknown>): Promise<string> {
+  private async createUser(args: Record<string, unknown>, caller: Caller): Promise<string> {
+    if (!caller || caller.role !== "ADMIN") return "Error: only admins can create users";
+
     const email = (args.email as string).toLowerCase().trim();
     const existing = await this.prisma.write.user.findUnique({ where: { email } });
     if (existing) return `Error: a user with email ${email} already exists`;
@@ -348,6 +352,8 @@ export class ChatService {
     const firstName = args.firstName as string;
     const lastName = args.lastName as string;
 
+    const count = await this.prisma.read.user.count();
+
     const user = await this.prisma.write.user.create({
       data: {
         firstName,
@@ -355,6 +361,7 @@ export class ChatService {
         name: `${firstName} ${lastName}`.trim(),
         email,
         emailVerified: true,
+        role: count === 0 ? "ADMIN" : "USER",
         accounts: {
           create: { accountId: email, providerId: "credential", password: hashPassword(tempPassword) },
         },
@@ -363,7 +370,9 @@ export class ChatService {
     return `User created: ${user.firstName} ${user.lastName} <${user.email}>, id=${user.id}. Temporary password: ${tempPassword}`;
   }
 
-  private async updateUser(args: Record<string, unknown>): Promise<string> {
+  private async updateUser(args: Record<string, unknown>, caller: Caller): Promise<string> {
+    if (!caller || caller.role !== "ADMIN") return "Error: only admins can update users";
+
     const existing = await this.prisma.read.user.findUnique({ where: { id: args.id as string } });
     if (!existing) return `Error: user id=${args.id} not found`;
 
@@ -379,7 +388,10 @@ export class ChatService {
     return `User id=${user.id} updated: ${user.firstName} ${user.lastName} <${user.email}>`;
   }
 
-  private async deleteUser(args: Record<string, unknown>): Promise<string> {
+  private async deleteUser(args: Record<string, unknown>, caller: Caller): Promise<string> {
+    if (!caller || caller.role !== "ADMIN") return "Error: only admins can delete users";
+    if (caller.id === (args.id as string)) return "Error: cannot delete your own account";
+
     const user = await this.prisma.write.user.findUnique({ where: { id: args.id as string } });
     if (!user) return `Error: user id=${args.id} not found`;
 
@@ -389,7 +401,7 @@ export class ChatService {
 
   // ── Dispatcher ─────────────────────────────────────────────────────────────
 
-  private async executeTool(name: string, args: Record<string, unknown>): Promise<string> {
+  private async executeTool(name: string, args: Record<string, unknown>, caller: Caller): Promise<string> {
     try {
       switch (name) {
         case "list_notes":   return await this.listNotes(args);
@@ -401,9 +413,9 @@ export class ChatService {
         case "list_users":   return await this.listUsers();
         case "get_user":     return await this.getUser(args);
         case "count_users":  return await this.countUsers();
-        case "create_user":  return await this.createUser(args);
-        case "update_user":  return await this.updateUser(args);
-        case "delete_user":  return await this.deleteUser(args);
+        case "create_user":  return await this.createUser(args, caller);
+        case "update_user":  return await this.updateUser(args, caller);
+        case "delete_user":  return await this.deleteUser(args, caller);
         default:             return `Unknown tool: ${name}`;
       }
     } catch (err) {
@@ -415,7 +427,7 @@ export class ChatService {
 
   // ── Stream ─────────────────────────────────────────────────────────────────
 
-  async stream(dto: ChatDto, res: Response): Promise<void> {
+  async stream(dto: ChatDto, res: Response, caller: Caller): Promise<void> {
     const model = dto.model ?? this.defaultModel;
     const systemPrompt = this.buildSystemPrompt();
     const messages: OllamaMessage[] = dto.messages
@@ -432,7 +444,7 @@ export class ChatService {
         })),
       });
       for (const call of dto.confirmedCalls) {
-        const result = await this.executeTool(call.name, call.args);
+        const result = await this.executeTool(call.name, call.args, caller);
         this.logger.log(`Confirmed: ${call.name}(${JSON.stringify(call.args)}) → ${result}`);
         messages.push({ role: "tool", content: result });
       }
@@ -491,7 +503,7 @@ export class ChatService {
       messages.push({ role: "assistant", content: reply.content ?? "", tool_calls: reply.tool_calls });
 
       for (const tc of reply.tool_calls) {
-        const result = await this.executeTool(tc.function.name, tc.function.arguments);
+        const result = await this.executeTool(tc.function.name, tc.function.arguments, caller);
         this.logger.log(`Tool: ${tc.function.name}(${JSON.stringify(tc.function.arguments)}) → ${result}`);
         messages.push({ role: "tool", content: result });
       }

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 
 jest.mock('../auth/better-auth', () => ({
   hashPassword: (pw: string) => `hashed:${pw}`,
@@ -13,7 +13,7 @@ import { MailService } from '../mail/mail.service';
 
 const mockPrisma = {
   read: {
-    user: { findUnique: jest.fn(), findMany: jest.fn() },
+    user: { findUnique: jest.fn(), findMany: jest.fn(), count: jest.fn() },
   },
   write: {
     user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
@@ -91,13 +91,15 @@ describe('UsersService', () => {
 
     it('throws ConflictException when email already exists', async () => {
       mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'existing' });
+      mockPrisma.read.user.count.mockResolvedValue(1);
 
       await expect(service.create(userData)).rejects.toThrow(ConflictException);
     });
 
-    it('creates user and sends welcome email', async () => {
+    it('creates user with USER role when other users exist', async () => {
       const created = { id: 'new-id', firstName: 'Erki', lastName: 'K', email: 'erki@test.ee', createdAt: new Date() };
       mockPrisma.write.user.findUnique.mockResolvedValue(null);
+      mockPrisma.read.user.count.mockResolvedValue(3);
       mockPrisma.write.user.create.mockResolvedValue(created);
       mockMail.sendWelcome.mockResolvedValue(undefined);
 
@@ -112,8 +114,87 @@ describe('UsersService', () => {
             email: 'erki@test.ee',
             name: 'Erki K',
             emailVerified: true,
+            role: 'USER',
           }),
         }),
+      );
+    });
+
+    it('creates first user with ADMIN role regardless of requested role', async () => {
+      const created = { id: 'first-id', firstName: 'Erki', lastName: 'K', email: 'erki@test.ee', createdAt: new Date() };
+      mockPrisma.write.user.findUnique.mockResolvedValue(null);
+      mockPrisma.read.user.count.mockResolvedValue(0);
+      mockPrisma.write.user.create.mockResolvedValue(created);
+      mockMail.sendWelcome.mockResolvedValue(undefined);
+
+      await service.create({ ...userData, role: 'USER' as any });
+
+      expect(mockPrisma.write.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ role: 'ADMIN' }),
+        }),
+      );
+    });
+  });
+
+  describe('getRole', () => {
+    it('returns role when user exists', async () => {
+      mockPrisma.read.user.findUnique.mockResolvedValue({ role: 'ADMIN' });
+
+      const result = await service.getRole('u1');
+
+      expect(result).toBe('ADMIN');
+      expect(mockPrisma.read.user.findUnique).toHaveBeenCalledWith({ where: { id: 'u1' }, select: { role: true } });
+    });
+
+    it('returns null when user not found', async () => {
+      mockPrisma.read.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.getRole('missing');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('updateRole', () => {
+    it('throws ForbiddenException when trying to change own role', async () => {
+      await expect(service.updateRole('u1', 'USER' as any, 'u1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException when user not found', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.updateRole('missing', 'USER' as any, 'requester')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when demoting last admin', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', role: 'ADMIN' });
+      mockPrisma.read.user.count.mockResolvedValue(1);
+
+      await expect(service.updateRole('u1', 'USER' as any, 'requester')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('updates role to ADMIN without last-admin check', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER' });
+      mockPrisma.write.user.update.mockResolvedValue({ id: 'u1', role: 'ADMIN' });
+
+      await service.updateRole('u1', 'ADMIN' as any, 'requester');
+
+      expect(mockPrisma.read.user.count).not.toHaveBeenCalled();
+      expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'u1' }, data: { role: 'ADMIN' } }),
+      );
+    });
+
+    it('updates role to USER when multiple admins exist', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', role: 'ADMIN' });
+      mockPrisma.read.user.count.mockResolvedValue(2);
+      mockPrisma.write.user.update.mockResolvedValue({ id: 'u1', role: 'USER' });
+
+      await service.updateRole('u1', 'USER' as any, 'requester');
+
+      expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'u1' }, data: { role: 'USER' } }),
       );
     });
   });
