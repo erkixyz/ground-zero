@@ -185,6 +185,11 @@ const TOOLS = [
   },
 ] as const;
 
+const MUTATING_TOOLS = new Set([
+  "create_note", "update_note", "delete_note",
+  "create_user", "update_user", "delete_user",
+]);
+
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -417,6 +422,22 @@ export class ChatService {
       .filter((m) => m.role !== "system")
       .map((m) => ({ role: m.role as OllamaMessage["role"], content: m.content }));
 
+    // If user confirmed pending tool calls, inject them before the loop
+    if (dto.confirmedCalls?.length) {
+      messages.push({
+        role: "assistant",
+        content: "",
+        tool_calls: dto.confirmedCalls.map((c) => ({
+          function: { name: c.name, arguments: c.args },
+        })),
+      });
+      for (const call of dto.confirmedCalls) {
+        const result = await this.executeTool(call.name, call.args);
+        this.logger.log(`Confirmed: ${call.name}(${JSON.stringify(call.args)}) → ${result}`);
+        messages.push({ role: "tool", content: result });
+      }
+    }
+
     const MAX_ITERATIONS = 6;
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
@@ -447,6 +468,22 @@ export class ChatService {
         res.setHeader("Content-Type", "text/plain; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache");
         res.write(reply.content ?? "");
+        res.end();
+        return;
+      }
+
+      // Pause before executing any mutating tools — request confirmation from the user
+      if (reply.tool_calls.some((tc) => MUTATING_TOOLS.has(tc.function.name))) {
+        const confirmPayload = {
+          __type: "confirm" as const,
+          preview: reply.content ?? "",
+          calls: reply.tool_calls.map((tc) => ({
+            name: tc.function.name,
+            args: tc.function.arguments,
+          })),
+        };
+        res.setHeader("Content-Type", "application/json");
+        res.write(JSON.stringify(confirmPayload));
         res.end();
         return;
       }

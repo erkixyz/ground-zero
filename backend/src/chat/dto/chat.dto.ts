@@ -1,4 +1,4 @@
-import { IsArray, IsIn, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsIn, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 
 export class MessageDto {
@@ -7,6 +7,14 @@ export class MessageDto {
 
   @IsString()
   content: string;
+}
+
+export class ConfirmedCallDto {
+  @IsString()
+  name: string;
+
+  @IsObject()
+  args: Record<string, unknown>;
 }
 
 export class ChatDto {
@@ -18,4 +26,10 @@ export class ChatDto {
   @IsOptional()
   @IsString()
   model?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ConfirmedCallDto)
+  confirmedCalls?: ConfirmedCallDto[];
 }
