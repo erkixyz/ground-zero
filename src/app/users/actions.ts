@@ -49,6 +49,8 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
   const email = (formData.get("email") as string)?.trim();
   const password = (formData.get("password") as string) || undefined;
   const role = formData.get("role") as string | null;
+  const clientIdRaw = formData.get("clientId") as string | null;
+  const clientId = clientIdRaw?.trim() || null;
 
   if (!firstName) return { error: "Eesnimi on kohustuslik" };
   if (!lastName) return { error: "Perenimi on kohustuslik" };
@@ -59,7 +61,7 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
     res = await fetch(`${process.env.API_URL}/api/users/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName, lastName, email, password }),
+      body: JSON.stringify({ firstName, lastName, email, password, clientId }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };

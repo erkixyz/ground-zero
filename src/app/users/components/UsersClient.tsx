@@ -25,6 +25,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import Link from "next/link";
 import UserFormDialog, { UserRow } from "./UserFormDialog";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import { deleteUser } from "../actions";
 import { useAuth } from "@/app/components/AuthProvider";
 import { useLanguage } from "@/context/LanguageContext";
@@ -93,6 +94,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                 <TableCell>{t.users.firstName}</TableCell>
                 <TableCell>{t.users.lastName}</TableCell>
                 <TableCell>{t.users.email}</TableCell>
+                <TableCell>{t.clients.client}</TableCell>
                 <TableCell>{t.users.role}</TableCell>
                 <TableCell>{t.users.added}</TableCell>
                 <TableCell align="right">{t.users.actions}</TableCell>
@@ -117,6 +119,26 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                       <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                         {user.email}
                       </Link>
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>
+                      {user.client ? (
+                        <Link
+                          href={`/clients/${user.client.id}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Chip
+                            icon={<BusinessOutlinedIcon />}
+                            label={user.client.name}
+                            size="small"
+                            variant="outlined"
+                            clickable
+                          />
+                        </Link>
+                      ) : (
+                        <Typography component="span" sx={{ color: "text.disabled", fontSize: 12 }}>
+                          {t.clients.noClient}
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Chip

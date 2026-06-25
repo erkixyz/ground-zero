@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState, useRef, useCallback } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -14,8 +14,15 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import Autocomplete from "@mui/material/Autocomplete";
 import { createUser, updateUser, UserFormState } from "../actions";
 import { useLanguage } from "@/context/LanguageContext";
+
+export type ClientOption = {
+  id: string;
+  name: string;
+  regCode: string | null;
+};
 
 export type UserRow = {
   id: string;
@@ -24,6 +31,8 @@ export type UserRow = {
   email: string;
   createdAt: string;
   role: "ADMIN" | "USER";
+  clientId?: string | null;
+  client?: ClientOption | null;
 };
 
 type Props = {
@@ -37,11 +46,36 @@ export default function UserFormDialog({ open, user, onClose, canEditRole = true
   const { t } = useLanguage();
   const isEdit = user !== null;
 
-  const action = isEdit
-    ? updateUser.bind(null, user.id)
-    : createUser;
-
+  const action = isEdit ? updateUser.bind(null, user.id) : createUser;
   const [state, formAction, pending] = useActionState<UserFormState, FormData>(action, null);
+
+  const [clientOptions, setClientOptions] = useState<ClientOption[]>([]);
+  const [clientInput, setClientInput] = useState("");
+  const [clientValue, setClientValue] = useState<ClientOption | null>(null);
+  const [clientLoading, setClientLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clientIdRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setClientValue(user?.client ?? null);
+      setClientInput(user?.client?.name ?? "");
+    }
+  }, [open, user]);
+
+  const searchClients = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!q.trim()) { setClientOptions([]); return; }
+    setClientLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/clients/search?q=${encodeURIComponent(q.trim())}`);
+        if (res.ok) setClientOptions(await res.json());
+      } finally {
+        setClientLoading(false);
+      }
+    }, 300);
+  }, []);
 
   useEffect(() => {
     if (state && "ok" in state) onClose();
@@ -97,6 +131,26 @@ export default function UserFormDialog({ open, user, onClose, canEditRole = true
                 <MenuItem value="ADMIN">{t.users.roleAdmin}</MenuItem>
               </Select>
             </FormControl>
+
+            <input ref={clientIdRef} type="hidden" name="clientId" value={clientValue?.id ?? ""} />
+            <Autocomplete
+              options={clientOptions}
+              getOptionLabel={(o) => o.regCode ? `${o.name} (${o.regCode})` : o.name}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+              value={clientValue}
+              inputValue={clientInput}
+              loading={clientLoading}
+              onInputChange={(_e, val) => { setClientInput(val); searchClients(val); }}
+              onChange={(_e, val) => { setClientValue(val); }}
+              noOptionsText={clientInput.trim() ? t.search.noResults : t.clients.searchClient}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t.clients.client}
+                  placeholder={t.clients.selectClient}
+                />
+              )}
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

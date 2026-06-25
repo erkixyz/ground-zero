@@ -9,6 +9,7 @@ import { EventsModule } from "./events/events.module";
 import { MessagingModule } from "./messaging/messaging.module";
 import { NotesModule } from "./notes/notes.module";
 import { UsersModule } from "./users/users.module";
+import { ClientsModule } from "./clients/clients.module";
 import { AuthModule } from "./auth/auth.module";
 import { ChatModule } from "./chat/chat.module";
 import { SearchModule } from "./search/search.module";
@@ -36,6 +37,7 @@ import { MailModule } from "./mail/mail.module";
     MessagingModule,
     NotesModule,
     UsersModule,
+    ClientsModule,
     AuthModule,
     ChatModule,
     SearchModule,

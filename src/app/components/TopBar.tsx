@@ -21,6 +21,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import SearchIcon from "@mui/icons-material/Search";
@@ -119,6 +120,18 @@ export default function TopBar() {
             }}
           >
             {t.nav.users}
+          </Button>
+          <Button
+            component={Link}
+            href="/clients"
+            size="small"
+            startIcon={<BusinessOutlinedIcon />}
+            sx={{
+              color: pathname.startsWith("/clients") ? "primary.main" : "text.secondary",
+              fontWeight: pathname.startsWith("/clients") ? 700 : 400,
+            }}
+          >
+            {t.clients.title}
           </Button>
           <Button
             component={Link}

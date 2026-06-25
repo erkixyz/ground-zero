@@ -7,9 +7,9 @@ export class SearchService {
 
   async search(q: string) {
     const term = q.trim();
-    if (!term) return { notes: [], users: [] };
+    if (!term) return { notes: [], users: [], clients: [] };
 
-    const [notes, users] = await Promise.all([
+    const [notes, users, clients] = await Promise.all([
       this.prisma.read.note.findMany({
         where: {
           OR: [
@@ -33,8 +33,19 @@ export class SearchService {
         take: 5,
         select: { id: true, firstName: true, lastName: true, email: true },
       }),
+      this.prisma.read.client.findMany({
+        where: {
+          OR: [
+            { name: { contains: term, mode: "insensitive" } },
+            { regCode: { contains: term, mode: "insensitive" } },
+          ],
+        },
+        orderBy: { name: "asc" },
+        take: 5,
+        select: { id: true, name: true, regCode: true },
+      }),
     ]);
 
-    return { notes, users };
+    return { notes, users, clients };
   }
 }

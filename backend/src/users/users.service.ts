@@ -5,12 +5,20 @@ import { MailService } from "../mail/mail.service";
 import { hashPassword } from "../auth/better-auth";
 import { Role } from "../generated/prisma/client";
 
+const clientSelect = {
+  id: true,
+  name: true,
+  regCode: true,
+} as const;
+
 const userSelect = {
   id: true,
   firstName: true,
   lastName: true,
   email: true,
   role: true,
+  clientId: true,
+  client: { select: clientSelect },
   createdAt: true,
 };
 
@@ -75,15 +83,16 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, data: { firstName?: string; lastName?: string; email?: string; password?: string; chatInputHistory?: string[] }) {
+  async update(id: string, data: { firstName?: string; lastName?: string; email?: string; password?: string; chatInputHistory?: string[]; clientId?: string | null }) {
     const user = await this.prisma.write.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
 
-    const updateData: Record<string, string> = {};
+    const updateData: Record<string, string | null> = {};
     if (data.firstName) updateData.firstName = data.firstName;
     if (data.lastName) updateData.lastName = data.lastName;
     if (data.email) updateData.email = data.email;
     if (data.chatInputHistory !== undefined) updateData.chatInputHistory = JSON.stringify(data.chatInputHistory);
+    if ("clientId" in data) updateData.clientId = data.clientId ?? null;
 
     if (data.firstName || data.lastName) {
       updateData.name = `${data.firstName ?? user.firstName} ${data.lastName ?? user.lastName}`.trim();

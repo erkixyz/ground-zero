@@ -160,6 +160,34 @@ describe('UsersController', () => {
         chatInputHistory: undefined,
       });
     });
+
+    it('passes clientId to service when provided', async () => {
+      mockUsersService.update.mockResolvedValue({ id: '1' });
+      const dto = { firstName: 'Uus', lastName: 'K', email: 'e@test.ee', clientId: 'c-123' };
+
+      await controller.update('1', dto as any);
+
+      expect(mockUsersService.update).toHaveBeenCalledWith('1', expect.objectContaining({ clientId: 'c-123' }));
+    });
+
+    it('passes null clientId to service when explicitly null', async () => {
+      mockUsersService.update.mockResolvedValue({ id: '1' });
+      const dto = { firstName: 'Uus', lastName: 'K', email: 'e@test.ee', clientId: null };
+
+      await controller.update('1', dto as any);
+
+      expect(mockUsersService.update).toHaveBeenCalledWith('1', expect.objectContaining({ clientId: null }));
+    });
+
+    it('does not pass clientId when not in dto', async () => {
+      mockUsersService.update.mockResolvedValue({ id: '1' });
+      const dto = { firstName: 'Uus' };
+
+      await controller.update('1', dto as any);
+
+      const call = mockUsersService.update.mock.calls[0][1];
+      expect('clientId' in call).toBe(false);
+    });
   });
 
   describe('remove', () => {

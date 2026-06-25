@@ -267,6 +267,34 @@ describe('UsersService', () => {
         }),
       );
     });
+
+    it('sets clientId when provided', async () => {
+      const existing = { id: '1', firstName: 'Erki', lastName: 'K', email: 'e@test.ee' };
+      mockPrisma.write.user.findUnique.mockResolvedValue(existing);
+      mockPrisma.write.user.update.mockResolvedValue({ ...existing, clientId: 'c-123', createdAt: new Date() });
+
+      await service.update('1', { clientId: 'c-123' });
+
+      expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ clientId: 'c-123' }),
+        }),
+      );
+    });
+
+    it('clears clientId when null passed', async () => {
+      const existing = { id: '1', firstName: 'Erki', lastName: 'K', email: 'e@test.ee' };
+      mockPrisma.write.user.findUnique.mockResolvedValue(existing);
+      mockPrisma.write.user.update.mockResolvedValue({ ...existing, clientId: null, createdAt: new Date() });
+
+      await service.update('1', { clientId: null });
+
+      expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ clientId: null }),
+        }),
+      );
+    });
   });
 
   describe('doVerifyEmail', () => {

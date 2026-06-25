@@ -14,6 +14,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
@@ -32,9 +33,16 @@ interface UserResult {
   email: string;
 }
 
+interface ClientResult {
+  id: string;
+  name: string;
+  regCode: string | null;
+}
+
 interface SearchResults {
   notes: NoteResult[];
   users: UserResult[];
+  clients: ClientResult[];
 }
 
 interface Props {
@@ -89,14 +97,16 @@ export default function GlobalSearch({ open, onClose }: Props) {
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const totalItems = (results?.notes.length ?? 0) + (results?.users.length ?? 0);
+  const totalItems = (results?.notes.length ?? 0) + (results?.users.length ?? 0) + (results?.clients.length ?? 0);
   const usersStart = results?.notes.length ?? 0;
+  const clientsStart = (results?.notes.length ?? 0) + (results?.users.length ?? 0);
 
   const flatPaths = useMemo<string[]>(() => {
     if (!results) return [];
     return [
       ...results.notes.map((n) => `/notes/${n.id}`),
       ...results.users.map((u) => `/users/${u.id}`),
+      ...results.clients.map((c) => `/clients/${c.id}`),
     ];
   }, [results]);
 
@@ -262,6 +272,39 @@ export default function GlobalSearch({ open, onClose }: Props) {
                         <ListItemText
                           primary={<Highlight text={`${user.firstName} ${user.lastName}`} query={query} />}
                           secondary={<Highlight text={user.email} query={query} />}
+                          slotProps={{
+                            primary: { component: "div", sx: { fontSize: 14, fontWeight: 500 } },
+                            secondary: { component: "div", sx: { fontSize: 12 } },
+                          }}
+                        />
+                      </ListItemButton>
+                    ))}
+                  </>
+                )}
+
+                {results && results.clients.length > 0 && (
+                  <>
+                    {(results.notes.length > 0 || results.users.length > 0) && <Divider sx={{ my: 0.5 }} />}
+                    <Typography
+                      variant="overline"
+                      sx={{ px: 2, pt: 1, pb: 0.5, display: "block", color: "text.disabled", fontSize: 10 }}
+                    >
+                      {t.search.clients}
+                    </Typography>
+                    {results.clients.map((client, i) => (
+                      <ListItemButton
+                        key={client.id}
+                        ref={(el) => { itemRefs.current[clientsStart + i] = el; }}
+                        selected={activeIndex === clientsStart + i}
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        onMouseMove={() => setActiveIndex(clientsStart + i)}
+                      >
+                        <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
+                          <BusinessOutlinedIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={<Highlight text={client.name} query={query} />}
+                          secondary={client.regCode ? <Highlight text={client.regCode} query={query} /> : undefined}
                           slotProps={{
                             primary: { component: "div", sx: { fontSize: 14, fontWeight: 500 } },
                             secondary: { component: "div", sx: { fontSize: 12 } },

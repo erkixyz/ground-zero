@@ -185,11 +185,87 @@ const TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_clients",
+      description: "List all clients in the client registry",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_client",
+      description: "Get a single client by their ID, including their linked users",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Client ID" },
+        },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "count_clients",
+      description: "Count total number of clients",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_client",
+      description: "Create a new client in the client registry",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Client name (e.g. company name)" },
+          regCode: { type: "string", description: "Registration code (optional)" },
+        },
+        required: ["name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_client",
+      description: "Update an existing client. Only provided fields are changed.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Client ID" },
+          name: { type: "string", description: "New name (optional)" },
+          regCode: { type: "string", description: "New registration code; empty string clears it (optional)" },
+        },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_client",
+      description: "Permanently delete a client by their ID",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Client ID to delete" },
+        },
+        required: ["id"],
+      },
+    },
+  },
 ] as const;
 
 const MUTATING_TOOLS = new Set([
   "create_note", "update_note", "delete_note",
   "create_user", "update_user", "delete_user",
+  "create_client", "update_client", "delete_client",
 ]);
 
 @Injectable()
@@ -203,9 +279,10 @@ export class ChatService {
   private buildSystemPrompt(): string {
     return (
       `You are a data assistant for the Ground Zero notes application.\n` +
-      `Your job is to help users view and manage notes and users.\n\n` +
+      `Your job is to help users view and manage notes, users and clients.\n\n` +
       `AVAILABLE TOOLS: list_notes, get_note, count_notes, create_note, update_note, delete_note, ` +
-      `list_users, get_user, count_users, create_user, update_user, delete_user.\n\n` +
+      `list_users, get_user, count_users, create_user, update_user, delete_user, ` +
+      `list_clients, get_client, count_clients, create_client, update_client, delete_client.\n\n` +
       `STRICT RULES:\n` +
       `1. NEVER give programming advice, code examples, or technical explanations.\n` +
       `2. NEVER make up data. Only report what the tools return.\n` +
@@ -399,6 +476,74 @@ export class ChatService {
     return `User ${user.firstName} ${user.lastName} (id=${user.id}) deleted`;
   }
 
+  // ── Clients ────────────────────────────────────────────────────────────────
+
+  private async listClients(): Promise<string> {
+    const clients = await this.prisma.read.client.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, regCode: true },
+    });
+    if (clients.length === 0) return "No clients found.";
+    return clients
+      .map((c) => `[id:${c.id}] "${c.name}"${c.regCode ? ` (reg: ${c.regCode})` : ""}`)
+      .join("\n");
+  }
+
+  private async getClient(args: Record<string, unknown>): Promise<string> {
+    const client = await this.prisma.read.client.findUnique({
+      where: { id: args.id as string },
+      select: {
+        id: true,
+        name: true,
+        regCode: true,
+        createdAt: true,
+        users: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+    if (!client) return `Client id=${args.id} not found.`;
+    const users = client.users.length
+      ? client.users.map((u) => `  - ${u.firstName} ${u.lastName} <${u.email}>`).join("\n")
+      : "  (no linked users)";
+    return (
+      `[id:${client.id}] "${client.name}"` +
+      (client.regCode ? `\nReg code: ${client.regCode}` : "") +
+      `\nCreated: ${client.createdAt.toISOString().slice(0, 10)}` +
+      `\nUsers:\n${users}`
+    );
+  }
+
+  private async countClients(): Promise<string> {
+    const count = await this.prisma.read.client.count();
+    return `${count} client(s) total.`;
+  }
+
+  private async createClient(args: Record<string, unknown>): Promise<string> {
+    const client = await this.prisma.write.client.create({
+      data: {
+        name: (args.name as string).trim(),
+        regCode: (args.regCode as string | undefined)?.trim() || null,
+      },
+    });
+    return `Client created: id=${client.id}, name="${client.name}"${client.regCode ? `, reg: ${client.regCode}` : ""}`;
+  }
+
+  private async updateClient(args: Record<string, unknown>): Promise<string> {
+    const existing = await this.prisma.read.client.findUnique({ where: { id: args.id as string } });
+    if (!existing) return `Error: client id=${args.id} not found`;
+    const data: Record<string, string | null> = {};
+    if (args.name !== undefined) data.name = (args.name as string).trim();
+    if (args.regCode !== undefined) data.regCode = (args.regCode as string)?.trim() || null;
+    const client = await this.prisma.write.client.update({ where: { id: args.id as string }, data });
+    return `Client id=${client.id} updated: "${client.name}"${client.regCode ? `, reg: ${client.regCode}` : ""}`;
+  }
+
+  private async deleteClient(args: Record<string, unknown>): Promise<string> {
+    const client = await this.prisma.write.client.findUnique({ where: { id: args.id as string } });
+    if (!client) return `Error: client id=${args.id} not found`;
+    await this.prisma.write.client.delete({ where: { id: args.id as string } });
+    return `Client "${client.name}" (id=${client.id}) deleted`;
+  }
+
   // ── Dispatcher ─────────────────────────────────────────────────────────────
 
   private async executeTool(name: string, args: Record<string, unknown>, caller: Caller): Promise<string> {
@@ -416,6 +561,12 @@ export class ChatService {
         case "create_user":  return await this.createUser(args, caller);
         case "update_user":  return await this.updateUser(args, caller);
         case "delete_user":  return await this.deleteUser(args, caller);
+        case "list_clients": return await this.listClients();
+        case "get_client":   return await this.getClient(args);
+        case "count_clients":return await this.countClients();
+        case "create_client":return await this.createClient(args);
+        case "update_client":return await this.updateClient(args);
+        case "delete_client":return await this.deleteClient(args);
         default:             return `Unknown tool: ${name}`;
       }
     } catch (err) {

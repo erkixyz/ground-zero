@@ -11,6 +11,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import EmailIcon from "@mui/icons-material/EmailOutlined";
 import CalendarTodayIcon from "@mui/icons-material/CalendarTodayOutlined";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import Link from "next/link";
 import { getServerTranslations } from "@/i18n/server";
 import { notFound } from "next/navigation";
 import type { UserRow } from "../components/UserFormDialog";
@@ -74,6 +76,22 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
                       {t.users.added}: {new Date(user.createdAt).toLocaleDateString(t.common.localeCode)}
                     </Typography>
                   </Stack>
+                  {user.client && (
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                      <BusinessOutlinedIcon sx={{ color: "text.secondary", fontSize: 18 }} />
+                      <Link
+                        href={`/clients/${user.client.id}`}
+                        style={{ color: "inherit", textDecoration: "none" }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "primary.main", "&:hover": { textDecoration: "underline" } }}
+                        >
+                          {user.client.name}
+                        </Typography>
+                      </Link>
+                    </Stack>
+                  )}
                 </Stack>
               </Stack>
             </CardContent>

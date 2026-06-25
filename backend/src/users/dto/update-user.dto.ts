@@ -28,4 +28,9 @@ export class UpdateUserDto {
   @IsArray()
   @IsString({ each: true })
   chatInputHistory?: string[];
+
+  @ApiPropertyOptional({ example: "clxyz123", description: "Client ID or null to unlink" })
+  @IsOptional()
+  @IsString()
+  clientId?: string | null;
 }

@@ -15,6 +15,15 @@ enum Role {
   ADMIN
 }
 
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  regCode   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -25,6 +34,8 @@ model User {
   lastName         String    @default("")
   role          Role      @default(USER)
   chatInputHistory String?
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt        DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   notes         Note[]
