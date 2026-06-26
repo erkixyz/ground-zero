@@ -4,8 +4,8 @@ import { API, createTestUser, deleteTestUser } from "./helpers";
 async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/");
   await page.getByRole("button", { name: "Logi sisse" }).click();
-  await page.getByLabel("E-post").fill(email);
-  await page.getByLabel("Parool").fill(password);
+  await page.getByRole("dialog").getByLabel("E-post").fill(email);
+  await page.getByRole("dialog").getByLabel("Parool").fill(password);
   await page.getByRole("dialog").getByRole("button", { name: "Logi sisse" }).click();
   await expect(page.getByRole("button", { name: "Logi sisse" })).not.toBeVisible({ timeout: 5000 });
 }
@@ -23,11 +23,13 @@ test.describe("Kasutajate haldus", () => {
   });
 
   test("kasutajate leht laadib", async ({ page }) => {
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/users");
     await expect(page.getByRole("button", { name: "Lisa kasutaja" })).toBeVisible();
   });
 
   test("kasutajate tabel kuvab veerupäiseid", async ({ page }) => {
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/users");
     await expect(page.getByText("Eesnimi")).toBeVisible();
     await expect(page.getByText("Perenimi")).toBeVisible();
@@ -37,6 +39,7 @@ test.describe("Kasutajate haldus", () => {
   test("saab luua uue kasutaja", async ({ page, request }) => {
     const email = `new-user-${Date.now()}@test.local`;
 
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/users");
     await page.getByRole("button", { name: "Lisa kasutaja" }).click();
 
@@ -57,11 +60,12 @@ test.describe("Kasutajate haldus", () => {
   });
 
   test("kasutaja kustutamine küsib kinnitust", async ({ page }) => {
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/users");
 
-    const rows = page.getByRole("row");
-    await expect(rows.nth(1)).toBeVisible({ timeout: 5000 });
-    await rows.nth(1).getByRole("button", { name: "Kustuta" }).click();
+    await expect(page.getByRole("row").nth(1)).toBeVisible({ timeout: 5000 });
+    // Click first enabled delete button (own row's button is disabled)
+    await page.locator('button[aria-label="Kustuta"]:not([disabled])').first().click();
 
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByText(/kas oled kindel/i)).toBeVisible();
@@ -71,6 +75,7 @@ test.describe("Kasutajate haldus", () => {
   });
 
   test("kasutaja redigeerimise dialoog avaneb eelnevate andmetega", async ({ page }) => {
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/users");
 
     const rows = page.getByRole("row");

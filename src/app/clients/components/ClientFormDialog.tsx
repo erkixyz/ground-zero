@@ -12,11 +12,17 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { createClient, updateClient, ClientFormState } from "../actions";
 import { useLanguage } from "@/context/LanguageContext";
+import CountrySelect from "./CountrySelect";
+import { DEFAULT_COUNTRY } from "@/config";
 
 export type ClientRow = {
   id: string;
   name: string;
   regCode: string | null;
+  street: string | null;
+  city: string | null;
+  zip: string | null;
+  country: string | null;
   createdAt: string;
 };
 
@@ -27,7 +33,7 @@ type Props = {
 };
 
 export default function ClientFormDialog({ open, client, onClose }: Props) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const isEdit = client !== null;
 
   const action = isEdit ? updateClient.bind(null, client.id) : createClient;
@@ -38,7 +44,7 @@ export default function ClientFormDialog({ open, client, onClose }: Props) {
   }, [state, onClose]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <form action={formAction}>
         <DialogTitle>{isEdit ? t.clients.editClient : t.clients.addClient2}</DialogTitle>
         <DialogContent>
@@ -60,6 +66,31 @@ export default function ClientFormDialog({ open, client, onClose }: Props) {
               fullWidth
               defaultValue={client?.regCode ?? ""}
               placeholder="12345678"
+            />
+            <TextField
+              name="street"
+              label={t.clients.street}
+              fullWidth
+              defaultValue={client?.street ?? ""}
+            />
+            <Stack direction="row" spacing={2}>
+              <TextField
+                name="zip"
+                label={t.clients.zip}
+                defaultValue={client?.zip ?? ""}
+                sx={{ width: 160 }}
+              />
+              <TextField
+                name="city"
+                label={t.clients.city}
+                fullWidth
+                defaultValue={client?.city ?? ""}
+              />
+            </Stack>
+            <CountrySelect
+              label={t.clients.country}
+              locale={locale}
+              defaultValue={client?.country ?? DEFAULT_COUNTRY}
             />
           </Stack>
         </DialogContent>

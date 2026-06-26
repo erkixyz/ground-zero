@@ -21,16 +21,17 @@ test.describe("Autentimine", () => {
   test("'Logi sisse' nupp avab dialoogi", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Logi sisse" }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByLabel("E-post")).toBeVisible();
-    await expect(page.getByLabel("Parool")).toBeVisible();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel("E-post")).toBeVisible();
+    await expect(dialog.getByLabel("Parool")).toBeVisible();
   });
 
   test("vale parooliga sisselogimine näitab viga", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Logi sisse" }).click();
-    await page.getByLabel("E-post").fill("playwright@test.local");
-    await page.getByLabel("Parool").fill("vale-parool");
+    await page.getByRole("dialog").getByLabel("E-post").fill("playwright@test.local");
+    await page.getByRole("dialog").getByLabel("Parool").fill("vale-parool");
     await page.getByRole("dialog").getByRole("button", { name: "Logi sisse" }).click();
     await expect(page.getByRole("alert")).toBeVisible({ timeout: 5000 });
   });
@@ -45,8 +46,8 @@ test.describe("Autentimine", () => {
   test("õige parooliga sisselogimine õnnestub", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Logi sisse" }).click();
-    await page.getByLabel("E-post").fill("playwright@test.local");
-    await page.getByLabel("Parool").fill("Test1234!");
+    await page.getByRole("dialog").getByLabel("E-post").fill("playwright@test.local");
+    await page.getByRole("dialog").getByLabel("Parool").fill("Test1234!");
     await page.getByRole("dialog").getByRole("button", { name: "Logi sisse" }).click();
 
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
@@ -57,8 +58,8 @@ test.describe("Autentimine", () => {
   test("sisselogitud kasutaja saab välja logida", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Logi sisse" }).click();
-    await page.getByLabel("E-post").fill("playwright@test.local");
-    await page.getByLabel("Parool").fill("Test1234!");
+    await page.getByRole("dialog").getByLabel("E-post").fill("playwright@test.local");
+    await page.getByRole("dialog").getByLabel("Parool").fill("Test1234!");
     await page.getByRole("dialog").getByRole("button", { name: "Logi sisse" }).click();
     await expect(page.getByText("PT")).toBeVisible({ timeout: 5000 });
 

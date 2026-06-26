@@ -64,4 +64,43 @@ describe('translations', () => {
       }
     })
   })
+
+  describe('clients namespace', () => {
+    it('both locales have address field keys', () => {
+      for (const locale of locales) {
+        const { clients } = translations[locale]
+        expect(clients).toHaveProperty('street')
+        expect(clients).toHaveProperty('city')
+        expect(clients).toHaveProperty('zip')
+        expect(clients).toHaveProperty('country')
+      }
+    })
+
+    it('et has Estonian address labels', () => {
+      const { clients } = translations.et
+      expect(clients.street).toBe('Tänav, maja, korter')
+      expect(clients.city).toBe('Linn')
+      expect(clients.zip).toBe('Sihtnumber')
+      expect(clients.country).toBe('Riik')
+    })
+
+    it('en has English address labels', () => {
+      const { clients } = translations.en
+      expect(clients.street).toBe('Street, building, apartment')
+      expect(clients.city).toBe('City')
+      expect(clients.zip).toBe('Postal code')
+      expect(clients.country).toBe('Country')
+    })
+
+    it('both locales have core client keys', () => {
+      for (const locale of locales) {
+        const { clients } = translations[locale]
+        expect(clients).toHaveProperty('name')
+        expect(clients).toHaveProperty('regCode')
+        expect(clients).toHaveProperty('addClient')
+        expect(clients).toHaveProperty('editClient')
+        expect(clients).toHaveProperty('deleteTitle')
+      }
+    })
+  })
 })

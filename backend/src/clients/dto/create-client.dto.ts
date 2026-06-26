@@ -11,4 +11,24 @@ export class CreateClientDto {
   @IsOptional()
   @IsString()
   regCode?: string;
+
+  @ApiPropertyOptional({ example: "Pärnu mnt 1" })
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @ApiPropertyOptional({ example: "Tallinn" })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ example: "10148" })
+  @IsOptional()
+  @IsString()
+  zip?: string;
+
+  @ApiPropertyOptional({ example: "Eesti" })
+  @IsOptional()
+  @IsString()
+  country?: string;
 }

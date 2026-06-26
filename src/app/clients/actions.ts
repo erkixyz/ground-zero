@@ -13,6 +13,10 @@ async function forwardCookie() {
 export async function createClient(_prev: ClientFormState, formData: FormData): Promise<ClientFormState> {
   const name = (formData.get("name") as string)?.trim();
   const regCode = (formData.get("regCode") as string)?.trim() || undefined;
+  const street = (formData.get("street") as string)?.trim() || undefined;
+  const city = (formData.get("city") as string)?.trim() || undefined;
+  const zip = (formData.get("zip") as string)?.trim() || undefined;
+  const country = (formData.get("country") as string)?.trim() || undefined;
 
   if (!name) return { error: "Nimi on kohustuslik" };
 
@@ -22,7 +26,7 @@ export async function createClient(_prev: ClientFormState, formData: FormData): 
     res = await fetch(`${process.env.API_URL}/api/clients`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
-      body: JSON.stringify({ name, regCode }),
+      body: JSON.stringify({ name, regCode, street, city, zip, country }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };
@@ -40,6 +44,10 @@ export async function createClient(_prev: ClientFormState, formData: FormData): 
 export async function updateClient(id: string, _prev: ClientFormState, formData: FormData): Promise<ClientFormState> {
   const name = (formData.get("name") as string)?.trim();
   const regCode = (formData.get("regCode") as string)?.trim() || "";
+  const street = (formData.get("street") as string)?.trim() || "";
+  const city = (formData.get("city") as string)?.trim() || "";
+  const zip = (formData.get("zip") as string)?.trim() || "";
+  const country = (formData.get("country") as string)?.trim() || "";
 
   if (!name) return { error: "Nimi on kohustuslik" };
 
@@ -49,7 +57,7 @@ export async function updateClient(id: string, _prev: ClientFormState, formData:
     res = await fetch(`${process.env.API_URL}/api/clients/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
-      body: JSON.stringify({ name, regCode }),
+      body: JSON.stringify({ name, regCode, street, city, zip, country }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };

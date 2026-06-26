@@ -19,6 +19,10 @@ model Client {
   id        String   @id @default(cuid())
   name      String
   regCode   String?
+  street    String?
+  city      String?
+  zip       String?
+  country   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   users     User[]

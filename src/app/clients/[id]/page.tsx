@@ -11,16 +11,29 @@ import Chip from "@mui/material/Chip";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import FingerprintIcon from "@mui/icons-material/FingerprintOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayIcon from "@mui/icons-material/CalendarTodayOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import Link from "next/link";
 import { getServerTranslations } from "@/i18n/server";
 import { notFound } from "next/navigation";
 
+function flagEmoji(code: string) {
+  return String.fromCodePoint(...code.split("").map((c) => c.charCodeAt(0) + 0x1f1a5));
+}
+
+function countryName(code: string, locale: string) {
+  return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code;
+}
+
 type ClientDetail = {
   id: string;
   name: string;
   regCode: string | null;
+  street: string | null;
+  city: string | null;
+  zip: string | null;
+  country: string | null;
   createdAt: string;
   users: { id: string; firstName: string; lastName: string; email: string }[];
 };
@@ -78,6 +91,24 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                     <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                       <FingerprintIcon sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Typography variant="body2">{client.regCode}</Typography>
+                    </Stack>
+                  )}
+                  {(client.street || client.city || client.zip || client.country) && (
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start" }}>
+                      <LocationOnOutlinedIcon sx={{ color: "text.secondary", fontSize: 18, mt: 0.3 }} />
+                      <Stack>
+                        {client.street && <Typography variant="body2">{client.street}</Typography>}
+                        {(client.zip || client.city) && (
+                          <Typography variant="body2">
+                            {[client.zip, client.city].filter(Boolean).join(" ")}
+                          </Typography>
+                        )}
+                        {client.country && (
+                          <Typography variant="body2">
+                            {flagEmoji(client.country)} {countryName(client.country, t.common.localeCode)}
+                          </Typography>
+                        )}
+                      </Stack>
                     </Stack>
                   )}
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>

@@ -171,6 +171,10 @@ const translations = {
       selectClient: "Vali klient…",
       searchClient: "Otsi klienti…",
       noClient: "—",
+      street: "Tänav, maja, korter",
+      city: "Linn",
+      zip: "Sihtnumber",
+      country: "Riik",
     },
     search: {
       placeholder: "Otsi märkmeid, kasutajaid ja kliente…",
@@ -356,6 +360,10 @@ const translations = {
       selectClient: "Select client…",
       searchClient: "Search client…",
       noClient: "—",
+      street: "Street, building, apartment",
+      city: "City",
+      zip: "Postal code",
+      country: "Country",
     },
     search: {
       placeholder: "Search notes, users and clients…",

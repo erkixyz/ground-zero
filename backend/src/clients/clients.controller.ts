@@ -49,7 +49,7 @@ export class ClientsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateClientDto) {
-    return this.clientsService.create({ name: dto.name, regCode: dto.regCode });
+    return this.clientsService.create({ name: dto.name, regCode: dto.regCode, street: dto.street, city: dto.city, zip: dto.zip, country: dto.country });
   }
 
   @ApiOperation({ summary: "Update client" })
@@ -58,7 +58,7 @@ export class ClientsController {
   @ApiResponse({ status: 404, description: "Client not found" })
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateClientDto) {
-    return this.clientsService.update(id, { name: dto.name, regCode: dto.regCode });
+    return this.clientsService.update(id, { name: dto.name, regCode: dto.regCode, street: dto.street, city: dto.city, zip: dto.zip, country: dto.country });
   }
 
   @ApiOperation({ summary: "Delete client" })
