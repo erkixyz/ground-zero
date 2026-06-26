@@ -19,6 +19,7 @@ export async function createClient(_prev: ClientFormState, formData: FormData): 
   const country = (formData.get("country") as string)?.trim() || undefined;
 
   if (!name) return { error: "Nimi on kohustuslik" };
+  if (!country) return { error: "Riik on kohustuslik" };
 
   const cookie = await forwardCookie();
   let res: Response;
@@ -50,6 +51,7 @@ export async function updateClient(id: string, _prev: ClientFormState, formData:
   const country = (formData.get("country") as string)?.trim() || "";
 
   if (!name) return { error: "Nimi on kohustuslik" };
+  if (!country) return { error: "Riik on kohustuslik" };
 
   const cookie = await forwardCookie();
   let res: Response;

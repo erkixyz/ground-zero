@@ -46,9 +46,10 @@ type Props = {
   label: string;
   locale: string;
   defaultValue?: string | null;
+  required?: boolean;
 };
 
-export default function CountrySelect({ label, locale, defaultValue }: Props) {
+export default function CountrySelect({ label, locale, defaultValue, required }: Props) {
   const options = useMemo(() => buildOptions(locale), [locale]);
 
   const [selected, setSelected] = useState<CountryOption | null>(() =>
@@ -80,6 +81,7 @@ export default function CountrySelect({ label, locale, defaultValue }: Props) {
             <TextField
               {...params}
               label={label}
+              required={required}
               slotProps={{
                 ...(params.slotProps as object),
                 input: {

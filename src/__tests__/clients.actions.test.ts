@@ -30,10 +30,18 @@ describe('createClient', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
+  it('returns error when country is empty', async () => {
+    const fd = new FormData()
+    fd.append('name', 'Acme OÜ')
+    expect(await createClient(null, fd)).toEqual({ error: 'Riik on kohustuslik' })
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
   it('returns { ok: true } on success', async () => {
     mockFetch().mockResolvedValue(okResponse)
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
+    fd.append('country', 'EE')
     expect(await createClient(null, fd)).toEqual({ ok: true })
   })
 
@@ -66,6 +74,7 @@ describe('createClient', () => {
     fd.append('name', '  Acme OÜ  ')
     fd.append('street', '  Pärnu mnt 1  ')
     fd.append('city', '  Tallinn  ')
+    fd.append('country', 'EE')
 
     await createClient(null, fd)
 
@@ -79,6 +88,7 @@ describe('createClient', () => {
     mockFetch().mockResolvedValue(okResponse)
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
+    fd.append('country', 'EE')
 
     await createClient(null, fd)
 
@@ -87,13 +97,13 @@ describe('createClient', () => {
     expect(body.street).toBeUndefined()
     expect(body.city).toBeUndefined()
     expect(body.zip).toBeUndefined()
-    expect(body.country).toBeUndefined()
   })
 
   it('returns error on network failure', async () => {
     mockFetch().mockRejectedValue(new Error('Network error'))
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
+    fd.append('country', 'EE')
     expect(await createClient(null, fd)).toEqual({ error: 'API ei vasta — kontrolli ühendust' })
   })
 
@@ -105,6 +115,7 @@ describe('createClient', () => {
     })
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
+    fd.append('country', 'EE')
     expect(await createClient(null, fd)).toEqual({ error: 'Vigane päring' })
   })
 
@@ -116,6 +127,7 @@ describe('createClient', () => {
     })
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
+    fd.append('country', 'EE')
     const result = await createClient(null, fd)
     expect(result).toHaveProperty('error')
     expect((result as { error: string }).error).toContain('500')
@@ -135,10 +147,18 @@ describe('updateClient', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
+  it('returns error when country is empty', async () => {
+    const fd = new FormData()
+    fd.append('name', 'Acme OÜ')
+    expect(await updateClient('abc123', null, fd)).toEqual({ error: 'Riik on kohustuslik' })
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
   it('returns { ok: true } on success', async () => {
     mockFetch().mockResolvedValue(okResponse)
     const fd = new FormData()
     fd.append('name', 'Uus Nimi OÜ')
+    fd.append('country', 'EE')
     expect(await updateClient('abc123', null, fd)).toEqual({ ok: true })
   })
 
@@ -161,12 +181,13 @@ describe('updateClient', () => {
     expect(body).toMatchObject({ name: 'Acme OÜ', street: 'Viru 2', city: 'Tallinn', zip: '10111', country: 'EE' })
   })
 
-  it('clears address fields when submitted as empty strings', async () => {
+  it('clears optional address fields when submitted as empty strings', async () => {
     mockFetch().mockResolvedValue(okResponse)
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
     fd.append('street', '')
     fd.append('city', '')
+    fd.append('country', 'EE')
 
     await updateClient('abc123', null, fd)
 
@@ -179,6 +200,7 @@ describe('updateClient', () => {
     mockFetch().mockRejectedValue(new Error('fail'))
     const fd = new FormData()
     fd.append('name', 'Acme OÜ')
+    fd.append('country', 'EE')
     expect(await updateClient('abc123', null, fd)).toEqual({ error: 'API ei vasta — kontrolli ühendust' })
   })
 })

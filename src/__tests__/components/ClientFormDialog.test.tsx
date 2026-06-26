@@ -22,8 +22,8 @@ vi.mock('@/app/clients/actions', () => ({
 }))
 
 vi.mock('@/app/clients/components/CountrySelect', () => ({
-  default: ({ defaultValue }: { defaultValue?: string }) => (
-    <input name="country" defaultValue={defaultValue ?? ''} data-testid="country-select" readOnly />
+  default: ({ defaultValue, required }: { defaultValue?: string; required?: boolean }) => (
+    <input name="country" defaultValue={defaultValue ?? ''} data-testid="country-select" required={required} readOnly />
   ),
 }))
 
@@ -76,6 +76,12 @@ describe('ClientFormDialog', () => {
       render(<ClientFormDialog open={true} client={null} onClose={onClose} />)
       const countryInput = screen.getByTestId('country-select') as HTMLInputElement
       expect(countryInput.value).toBe('EE')
+    })
+
+    it('country field is required', () => {
+      render(<ClientFormDialog open={true} client={null} onClose={onClose} />)
+      const countryInput = screen.getByTestId('country-select') as HTMLInputElement
+      expect(countryInput.required).toBe(true)
     })
 
     it('renders add button', () => {

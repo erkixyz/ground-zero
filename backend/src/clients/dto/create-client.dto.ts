@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
+
 export class CreateClientDto {
   @ApiProperty({ example: "Acme OÜ" })
   @IsString()
@@ -27,8 +28,8 @@ export class CreateClientDto {
   @IsString()
   zip?: string;
 
-  @ApiPropertyOptional({ example: "Eesti" })
-  @IsOptional()
+  @ApiProperty({ example: "EE" })
   @IsString()
-  country?: string;
+  @IsNotEmpty({ message: "Riik on kohustuslik" })
+  country: string;
 }

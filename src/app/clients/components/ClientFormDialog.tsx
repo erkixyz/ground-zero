@@ -90,6 +90,7 @@ export default function ClientFormDialog({ open, client, onClose }: Props) {
             <CountrySelect
               label={t.clients.country}
               locale={locale}
+              required
               defaultValue={client?.country ?? DEFAULT_COUNTRY}
             />
           </Stack>
