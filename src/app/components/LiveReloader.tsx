@@ -4,14 +4,19 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import { useToast } from "./ToastProvider";
+import { useAuth } from "./AuthProvider";
 
 export default function LiveReloader() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading || !user) return;
+
     const socket = io(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001", {
       transports: ["websocket"],
+      withCredentials: true,
     });
 
     socket.on("connect", () => {
@@ -34,7 +39,7 @@ export default function LiveReloader() {
     return () => {
       socket.disconnect();
     };
-  }, [router, showToast]);
+  }, [router, showToast, user, loading]);
 
   return null;
 }
