@@ -8,66 +8,66 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Req,
 } from "@nestjs/common";
-import { Request } from "express";
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiCookieAuth } from "@nestjs/swagger";
-import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../auth/better-auth";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
 import { NotesService } from "./notes.service";
 import { CreateNoteDto } from "./dto/create-note.dto";
 import { SendNoteDto } from "./dto/send-note.dto";
 import { NoteEntity } from "./entities/note.entity";
+import { Public, Roles } from "../auth/decorators/roles.decorator";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import type { RequestUser } from "../auth/guards/auth.guard";
 
-@ApiTags('notes')
+@ApiTags("notes")
 @Controller("notes")
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
-  @ApiOperation({ summary: 'List all notes' })
+  @Public()
+  @ApiOperation({ summary: "List all notes" })
   @ApiResponse({ status: 200, type: [NoteEntity] })
   @Get()
   findAll() {
     return this.notesService.findAll();
   }
 
-  @ApiOperation({ summary: 'Get note by id' })
-  @ApiParam({ name: 'id', type: Number })
+  @Public()
+  @ApiOperation({ summary: "Get note by id" })
+  @ApiParam({ name: "id", type: Number })
   @ApiResponse({ status: 200, type: NoteEntity })
-  @ApiResponse({ status: 404, description: 'Note not found' })
+  @ApiResponse({ status: 404, description: "Note not found" })
   @Get(":id")
   findOne(@Param("id", ParseIntPipe) id: number) {
     return this.notesService.findOne(id);
   }
 
-  @ApiCookieAuth()
-  @ApiOperation({ summary: 'Create note', description: 'Session optional — if logged in, the note is attributed to the current user.' })
+  @Public()
+  @ApiOperation({ summary: "Create note — attributed to the current user if logged in" })
   @ApiBody({ type: CreateNoteDto })
   @ApiResponse({ status: 201, type: NoteEntity })
-  @ApiResponse({ status: 400, description: 'title and content are required' })
+  @ApiResponse({ status: 400, description: "title and content are required" })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateNoteDto, @Req() req: Request) {
-    const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
-    const authorId: string | undefined = session?.user?.id ?? undefined;
-    return this.notesService.create(dto.title.trim(), dto.content.trim(), dto.category, dto.pinned, authorId);
+  create(@Body() dto: CreateNoteDto, @CurrentUser() user?: RequestUser) {
+    return this.notesService.create(dto.title.trim(), dto.content.trim(), dto.category, dto.pinned, user?.id);
   }
 
-  @ApiOperation({ summary: 'Send note by email', description: 'Sends note content and attachments to the given email address.' })
-  @ApiParam({ name: 'id', type: Number })
+  @ApiOperation({ summary: "Send note by email" })
+  @ApiParam({ name: "id", type: Number })
   @ApiBody({ type: SendNoteDto })
-  @ApiResponse({ status: 204, description: 'Sent' })
-  @ApiResponse({ status: 404, description: 'Note not found' })
+  @ApiResponse({ status: 204, description: "Sent" })
+  @ApiResponse({ status: 404, description: "Note not found" })
   @Post(":id/send")
   @HttpCode(HttpStatus.NO_CONTENT)
   async sendByEmail(@Param("id", ParseIntPipe) id: number, @Body() dto: SendNoteDto) {
     await this.notesService.sendByEmail(id, dto.email);
   }
 
-  @ApiOperation({ summary: 'Delete note' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 204, description: 'Deleted' })
-  @ApiResponse({ status: 404, description: 'Note not found' })
+  @Public()
+  @ApiOperation({ summary: "Delete note" })
+  @ApiParam({ name: "id", type: Number })
+  @ApiResponse({ status: 204, description: "Deleted" })
+  @ApiResponse({ status: 404, description: "Note not found" })
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param("id", ParseIntPipe) id: number) {

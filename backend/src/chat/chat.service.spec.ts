@@ -20,8 +20,8 @@ const mockPrisma = {
   },
 };
 
-const adminCaller = { id: 'admin-id', role: 'ADMIN' };
-const userCaller  = { id: 'user-id',  role: 'USER'  };
+const adminCaller = { id: 'admin-id', roles: ['GLOBAL_ADMIN'] };
+const userCaller  = { id: 'user-id',  roles: ['USER'] };
 
 const mockResponse = () => {
   const res: any = {};

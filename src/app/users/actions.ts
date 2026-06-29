@@ -15,7 +15,7 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
   const lastName = (formData.get("lastName") as string)?.trim();
   const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
-  const role = (formData.get("role") as string) || "USER";
+  const roles = formData.getAll("roles") as string[];
 
   if (!firstName) return { error: "Eesnimi on kohustuslik" };
   if (!lastName) return { error: "Perenimi on kohustuslik" };
@@ -28,7 +28,7 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
     res = await fetch(`${process.env.API_URL}/api/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
-      body: JSON.stringify({ firstName, lastName, email, password, role }),
+      body: JSON.stringify({ firstName, lastName, email, password, roles: roles.length ? roles : ["USER"] }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };
@@ -48,7 +48,7 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
   const lastName = (formData.get("lastName") as string)?.trim();
   const email = (formData.get("email") as string)?.trim();
   const password = (formData.get("password") as string) || undefined;
-  const role = formData.get("role") as string | null;
+  const roles = formData.getAll("roles") as string[];
   const clientIdRaw = formData.get("clientId") as string | null;
   const clientId = clientIdRaw?.trim() || null;
 
@@ -56,11 +56,12 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
   if (!lastName) return { error: "Perenimi on kohustuslik" };
   if (!email) return { error: "E-post on kohustuslik" };
 
+  const cookie = await forwardCookie();
   let res: Response;
   try {
     res = await fetch(`${process.env.API_URL}/api/users/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
       body: JSON.stringify({ firstName, lastName, email, password, clientId }),
     });
   } catch {
@@ -72,23 +73,24 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
     return { error: data.message ?? `Salvestamine ebaõnnestus (${res.status})` };
   }
 
-  if (role === "ADMIN" || role === "USER") {
-    const roleResult = await updateUserRole(id, role);
-    if (roleResult && "error" in roleResult) return roleResult;
+  // Update roles if provided (separate PATCH /roles endpoint)
+  if (roles.length > 0) {
+    const rolesResult = await updateUserRoles(id, roles);
+    if (rolesResult && "error" in rolesResult) return rolesResult;
   }
 
   revalidatePath("/users");
   return { ok: true };
 }
 
-export async function updateUserRole(id: string, role: "ADMIN" | "USER"): Promise<UserFormState> {
+export async function updateUserRoles(id: string, roles: string[]): Promise<UserFormState> {
   const cookie = await forwardCookie();
   let res: Response;
   try {
-    res = await fetch(`${process.env.API_URL}/api/users/${id}/role`, {
+    res = await fetch(`${process.env.API_URL}/api/users/${id}/roles`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({ roles }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };
@@ -96,7 +98,7 @@ export async function updateUserRole(id: string, role: "ADMIN" | "USER"): Promis
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    return { error: data.message ?? `Rolli muutmine ebaõnnestus (${res.status})` };
+    return { error: data.message ?? `Rollide muutmine ebaõnnestus (${res.status})` };
   }
 
   revalidatePath("/users");

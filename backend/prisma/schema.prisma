@@ -10,11 +10,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model Client {
   id        String   @id @default(cuid())
   name      String
@@ -48,7 +43,7 @@ model User {
   image         String?
   firstName        String    @default("")
   lastName         String    @default("")
-  role          Role      @default(USER)
+  roles         String[]  @default(["USER"])
   chatInputHistory String?
   clientId      String?
   client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)

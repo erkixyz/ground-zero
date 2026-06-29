@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
-import { APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { AuthGuard } from "./auth/guards/auth.guard";
+import { RolesGuard } from "./auth/guards/roles.guard";
 import { WinstonModule } from "nest-winston";
 import * as winston from "winston";
 import { AppController } from "./app.controller";
@@ -46,6 +48,8 @@ import { MailModule } from "./mail/mail.module";
   ],
   controllers: [AppController],
   providers: [
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: HttpLoggingInterceptor },
   ],
 })

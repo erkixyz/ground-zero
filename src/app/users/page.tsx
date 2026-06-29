@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { cookies } from "next/headers";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -11,11 +12,16 @@ import { getServerTranslations } from "@/i18n/server";
 
 export default async function UsersPage() {
   const { t } = await getServerTranslations();
+  const cookieStore = await cookies();
+  const cookie = cookieStore.toString();
   let users: UserRow[] = [];
   let fetchError: string | null = null;
 
   try {
-    const res = await fetch(`${process.env.API_URL}/api/users`, { cache: "no-store" });
+    const res = await fetch(`${process.env.API_URL}/api/users`, {
+      cache: "no-store",
+      headers: cookie ? { Cookie: cookie } : {},
+    });
     if (!res.ok) throw new Error(`${res.status}`);
     users = await res.json();
   } catch (e) {

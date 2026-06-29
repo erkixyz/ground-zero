@@ -10,10 +10,10 @@ import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import FormLabel from "@mui/material/FormLabel";
 import Autocomplete from "@mui/material/Autocomplete";
 import { createUser, updateUser, UserFormState } from "../actions";
 import { useLanguage } from "@/context/LanguageContext";
@@ -30,10 +30,12 @@ export type UserRow = {
   lastName: string;
   email: string;
   createdAt: string;
-  role: "ADMIN" | "USER";
+  roles: string[];
   clientId?: string | null;
   client?: ClientOption | null;
 };
+
+const ALL_ROLES = ["GLOBAL_ADMIN", "NOTES_ADMIN", "CLIENTS_ADMIN", "ORG_ADMIN", "USER"] as const;
 
 type Props = {
   open: boolean;
@@ -49,19 +51,26 @@ export default function UserFormDialog({ open, user, onClose, canEditRole = true
   const action = isEdit ? updateUser.bind(null, user.id) : createUser;
   const [state, formAction, pending] = useActionState<UserFormState, FormData>(action, null);
 
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(user?.roles ?? ["USER"]);
   const [clientOptions, setClientOptions] = useState<ClientOption[]>([]);
   const [clientInput, setClientInput] = useState("");
   const [clientValue, setClientValue] = useState<ClientOption | null>(null);
   const [clientLoading, setClientLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clientIdRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
+      setSelectedRoles(user?.roles ?? ["USER"]);
       setClientValue(user?.client ?? null);
       setClientInput(user?.client?.name ?? "");
     }
   }, [open, user]);
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
+    );
+  };
 
   const searchClients = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -80,6 +89,8 @@ export default function UserFormDialog({ open, user, onClose, canEditRole = true
   useEffect(() => {
     if (state && "ok" in state) onClose();
   }, [state, onClose]);
+
+  const roleKey = (r: string) => (t.users.roleLabels as Record<string, string>)[r] ?? r;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -120,19 +131,34 @@ export default function UserFormDialog({ open, user, onClose, canEditRole = true
               required={!isEdit}
               fullWidth
             />
-            <FormControl fullWidth size="small" disabled={!canEditRole}>
-              <InputLabel>{t.users.role}</InputLabel>
-              <Select
-                name="role"
-                label={t.users.role}
-                defaultValue={user?.role ?? "USER"}
-              >
-                <MenuItem value="USER">{t.users.roleUser}</MenuItem>
-                <MenuItem value="ADMIN">{t.users.roleAdmin}</MenuItem>
-              </Select>
-            </FormControl>
 
-            <input ref={clientIdRef} type="hidden" name="clientId" value={clientValue?.id ?? ""} />
+            {canEditRole && (
+              <Stack>
+                <FormLabel component="legend" sx={{ fontSize: 12, mb: 0.5 }}>
+                  {t.users.roles}
+                </FormLabel>
+                <FormGroup>
+                  {ALL_ROLES.map((role) => (
+                    <FormControlLabel
+                      key={role}
+                      control={
+                        <Checkbox
+                          size="small"
+                          name="roles"
+                          value={role}
+                          checked={selectedRoles.includes(role)}
+                          onChange={() => toggleRole(role)}
+                        />
+                      }
+                      label={roleKey(role)}
+                      sx={{ "& .MuiFormControlLabel-label": { fontSize: 14 } }}
+                    />
+                  ))}
+                </FormGroup>
+              </Stack>
+            )}
+
+            <input type="hidden" name="clientId" value={clientValue?.id ?? ""} />
             <Autocomplete
               options={clientOptions}
               getOptionLabel={(o) => o.regCode ? `${o.name} (${o.regCode})` : o.name}

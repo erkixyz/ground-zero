@@ -3,7 +3,7 @@ import { randomBytes } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { hashPassword } from "../auth/better-auth";
-import { Role } from "../generated/prisma/client";
+import { ALL_ROLES, Role } from "../auth/permissions";
 
 const clientSelect = {
   id: true,
@@ -16,7 +16,7 @@ const userSelect = {
   firstName: true,
   lastName: true,
   email: true,
-  role: true,
+  roles: true,
   clientId: true,
   client: { select: clientSelect },
   createdAt: true,
@@ -50,12 +50,21 @@ export class UsersService {
     };
   }
 
-  async create(data: { firstName: string; lastName: string; email: string; password: string; role?: Role }) {
+  async create(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    roles?: string[];
+  }) {
     const existing = await this.prisma.write.user.findUnique({ where: { email: data.email } });
     if (existing) throw new ConflictException("Selle e-postiga kasutaja on juba olemas");
 
     const count = await this.prisma.read.user.count();
-    const role: Role = count === 0 ? Role.ADMIN : (data.role ?? Role.USER);
+    const roles: string[] =
+      count === 0
+        ? [Role.GLOBAL_ADMIN]
+        : (data.roles?.length ? data.roles.filter((r) => ALL_ROLES.includes(r as Role)) : [Role.USER]);
 
     const hashedPw = hashPassword(data.password);
     const name = `${data.firstName} ${data.lastName}`.trim();
@@ -67,7 +76,7 @@ export class UsersService {
         name,
         email: data.email,
         emailVerified: true,
-        role,
+        roles,
         accounts: {
           create: {
             accountId: data.email,
@@ -83,11 +92,18 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, data: { firstName?: string; lastName?: string; email?: string; password?: string; chatInputHistory?: string[]; clientId?: string | null }) {
+  async update(id: string, data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    password?: string;
+    chatInputHistory?: string[];
+    clientId?: string | null;
+  }) {
     const user = await this.prisma.write.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
 
-    const updateData: Record<string, string | null> = {};
+    const updateData: Record<string, unknown> = {};
     if (data.firstName) updateData.firstName = data.firstName;
     if (data.lastName) updateData.lastName = data.lastName;
     if (data.email) updateData.email = data.email;
@@ -165,25 +181,31 @@ export class UsersService {
     await this.mail.sendEmailVerification(email.toLowerCase(), verifyUrl);
   }
 
-  async getRole(id: string): Promise<Role | null> {
-    const user = await this.prisma.read.user.findUnique({ where: { id }, select: { role: true } });
-    return user?.role ?? null;
+  async getRoles(id: string): Promise<string[]> {
+    const user = await this.prisma.read.user.findUnique({ where: { id }, select: { roles: true } });
+    return user?.roles ?? [];
   }
 
-  async updateRole(id: string, role: Role, requestingUserId: string) {
-    if (id === requestingUserId) throw new ForbiddenException("Ei saa oma rolli muuta");
+  async updateRoles(id: string, newRoles: string[], requestingUserId: string) {
+    if (id === requestingUserId) throw new ForbiddenException("Ei saa oma rolle muuta");
 
-    const user = await this.prisma.write.user.findUnique({ where: { id } });
+    const user = await this.prisma.write.user.findUnique({ where: { id }, select: { id: true, roles: true } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
 
-    if (role === Role.USER) {
-      const adminCount = await this.prisma.read.user.count({ where: { role: Role.ADMIN } });
-      if (adminCount <= 1) throw new ForbiddenException("Süsteemis peab olema vähemalt üks Admin");
+    const validRoles = newRoles.filter((r) => ALL_ROLES.includes(r as Role));
+    if (!validRoles.length) throw new ForbiddenException("Vähemalt üks roll on kohustuslik");
+
+    // Protect against removing the last GLOBAL_ADMIN
+    if (user.roles.includes(Role.GLOBAL_ADMIN) && !validRoles.includes(Role.GLOBAL_ADMIN)) {
+      const adminCount = await this.prisma.read.user.count({
+        where: { roles: { has: Role.GLOBAL_ADMIN } },
+      });
+      if (adminCount <= 1) throw new ForbiddenException("Süsteemis peab olema vähemalt üks globaalne haldur");
     }
 
     return this.prisma.write.user.update({
       where: { id },
-      data: { role },
+      data: { roles: validRoles },
       select: userSelect,
     });
   }

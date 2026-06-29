@@ -1,7 +1,27 @@
-import { test, expect } from "@playwright/test";
-import { API, createTestClient, deleteTestClient } from "./helpers";
+import { test, expect, type Page } from "@playwright/test";
+import { API, createTestClient, createTestUser, deleteTestClient, deleteTestUser } from "./helpers";
+
+async function loginAs(page: Page, email: string, password: string) {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Logi sisse" }).click();
+  await page.getByRole("dialog").getByLabel("E-post").fill(email);
+  await page.getByRole("dialog").getByLabel("Parool").fill(password);
+  await page.getByRole("dialog").getByRole("button", { name: "Logi sisse" }).click();
+  await expect(page.getByRole("button", { name: "Logi sisse" })).not.toBeVisible({ timeout: 5000 });
+}
 
 test.describe("Klientide haldus", () => {
+  let adminId: string;
+
+  test.beforeAll(async ({ request }) => {
+    const user = await createTestUser(request);
+    adminId = user.id;
+  });
+
+  test.afterAll(async ({ request }) => {
+    if (adminId) await deleteTestUser(request, adminId);
+  });
+
   test("klientide leht laadib", async ({ page }) => {
     await page.goto("/clients");
     await expect(page.getByRole("button", { name: "Lisa klient" })).toBeVisible();
@@ -17,6 +37,7 @@ test.describe("Klientide haldus", () => {
   test("saab luua uue kliendi nimega", async ({ page, request }) => {
     const name = `Playwright Klient ${Date.now()}`;
 
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/clients");
     await page.getByRole("button", { name: "Lisa klient" }).click();
 
@@ -36,6 +57,7 @@ test.describe("Klientide haldus", () => {
   test("saab luua kliendi koos aadressiga", async ({ page, request }) => {
     const name = `Aadress Klient ${Date.now()}`;
 
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/clients");
     await page.getByRole("button", { name: "Lisa klient" }).click();
 
@@ -61,6 +83,7 @@ test.describe("Klientide haldus", () => {
   test("kustutamine küsib kinnitust", async ({ page, request }) => {
     const client = await createTestClient(request, { name: `Kustuta test ${Date.now()}` });
 
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/clients");
     const row = page.getByRole("row").filter({ hasText: client.name });
     await expect(row).toBeVisible({ timeout: 5000 });
@@ -81,6 +104,7 @@ test.describe("Klientide haldus", () => {
       regCode: "55667788",
     });
 
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/clients");
     const row = page.getByRole("row").filter({ hasText: client.name });
     await expect(row).toBeVisible({ timeout: 5000 });
@@ -133,6 +157,7 @@ test.describe("Klientide haldus", () => {
   test("kliendi nimele klõpsamine avab detailvaate", async ({ page, request }) => {
     const client = await createTestClient(request, { name: `Link test ${Date.now()}` });
 
+    await loginAs(page, "playwright@test.local", "Test1234!");
     await page.goto("/clients");
     const row = page.getByRole("row").filter({ hasText: client.name });
     await expect(row).toBeVisible({ timeout: 5000 });

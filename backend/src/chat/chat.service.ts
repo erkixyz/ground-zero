@@ -4,7 +4,7 @@ import { ChatDto } from "./dto/chat.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { hashPassword } from "../auth/better-auth";
 
-type Caller = { id: string; role: string } | null;
+type Caller = { id: string; roles: string[] } | null;
 
 interface OllamaMessage {
   role: "user" | "assistant" | "tool";
@@ -419,7 +419,7 @@ export class ChatService {
   }
 
   private async createUser(args: Record<string, unknown>, caller: Caller): Promise<string> {
-    if (!caller || caller.role !== "ADMIN") return "Error: only admins can create users";
+    if (!caller || !caller.roles.includes("GLOBAL_ADMIN")) return "Error: only admins can create users";
 
     const email = (args.email as string).toLowerCase().trim();
     const existing = await this.prisma.write.user.findUnique({ where: { email } });
@@ -438,7 +438,7 @@ export class ChatService {
         name: `${firstName} ${lastName}`.trim(),
         email,
         emailVerified: true,
-        role: count === 0 ? "ADMIN" : "USER",
+        roles: count === 0 ? ["GLOBAL_ADMIN"] : ["USER"],
         accounts: {
           create: { accountId: email, providerId: "credential", password: hashPassword(tempPassword) },
         },
@@ -448,7 +448,7 @@ export class ChatService {
   }
 
   private async updateUser(args: Record<string, unknown>, caller: Caller): Promise<string> {
-    if (!caller || caller.role !== "ADMIN") return "Error: only admins can update users";
+    if (!caller || !caller.roles.includes("GLOBAL_ADMIN")) return "Error: only admins can update users";
 
     const existing = await this.prisma.read.user.findUnique({ where: { id: args.id as string } });
     if (!existing) return `Error: user id=${args.id} not found`;
@@ -466,7 +466,7 @@ export class ChatService {
   }
 
   private async deleteUser(args: Record<string, unknown>, caller: Caller): Promise<string> {
-    if (!caller || caller.role !== "ADMIN") return "Error: only admins can delete users";
+    if (!caller || !caller.roles.includes("GLOBAL_ADMIN")) return "Error: only admins can delete users";
     if (caller.id === (args.id as string)) return "Error: cannot delete your own account";
 
     const user = await this.prisma.write.user.findUnique({ where: { id: args.id as string } });

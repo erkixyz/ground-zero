@@ -20,6 +20,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
@@ -30,17 +31,27 @@ import { deleteUser } from "../actions";
 import { useAuth } from "@/app/components/AuthProvider";
 import { useLanguage } from "@/context/LanguageContext";
 
+const ROLE_COLORS: Record<string, "primary" | "success" | "warning" | "info" | "default"> = {
+  GLOBAL_ADMIN: "primary",
+  NOTES_ADMIN: "success",
+  CLIENTS_ADMIN: "warning",
+  ORG_ADMIN: "info",
+  USER: "default",
+};
+
 export default function UsersClient({ users }: { users: UserRow[] }) {
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
-  const isAdmin = currentUser?.role === "ADMIN";
-  const adminCount = users.filter((u) => u.role === "ADMIN").length;
-  const canEditRoleFor = (u: UserRow | null) => {
-    if (u === null) return true; // uue kasutaja loomisel admin valib rolli vabalt
-    if (u.id === currentUser?.id) return false; // ei saa oma rolli muuta
-    if (u.role === "ADMIN" && adminCount <= 1) return false; // ei saa viimast admini alandada
+  const isGlobalAdmin = currentUser?.roles?.includes("GLOBAL_ADMIN") ?? false;
+  const globalAdminCount = users.filter((u) => u.roles.includes("GLOBAL_ADMIN")).length;
+
+  const canEditRolesFor = (u: UserRow | null) => {
+    if (!isGlobalAdmin) return false;
+    if (u === null) return true;
+    if (u.id === currentUser?.id) return false;
     return true;
   };
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
@@ -66,7 +77,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
     });
   };
 
-  if (!isAdmin) {
+  if (!isGlobalAdmin) {
     return (
       <Alert severity="warning" sx={{ mt: 2 }}>
         {t.users.adminOnly}
@@ -103,6 +114,8 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
             <TableBody>
               {users.map((user) => {
                 const isSelf = currentUser?.id === user.id;
+                const isLastAdmin =
+                  user.roles.includes("GLOBAL_ADMIN") && globalAdminCount <= 1;
                 return (
                   <TableRow key={user.id} hover sx={{ cursor: "pointer" }}>
                     <TableCell>
@@ -122,10 +135,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                     </TableCell>
                     <TableCell sx={{ fontSize: 12 }}>
                       {user.client ? (
-                        <Link
-                          href={`/clients/${user.client.id}`}
-                          style={{ textDecoration: "none" }}
-                        >
+                        <Link href={`/clients/${user.client.id}`} style={{ textDecoration: "none" }}>
                           <Chip
                             icon={<BusinessOutlinedIcon />}
                             label={user.client.name}
@@ -141,12 +151,17 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={user.role === "ADMIN" ? t.users.roleAdmin : t.users.roleUser}
-                        size="small"
-                        color={user.role === "ADMIN" ? "primary" : "default"}
-                        variant={user.role === "ADMIN" ? "filled" : "outlined"}
-                      />
+                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                        {user.roles.map((role) => (
+                          <Chip
+                            key={role}
+                            label={(t.users.roleLabels as Record<string, string>)[role] ?? role}
+                            size="small"
+                            color={ROLE_COLORS[role] ?? "default"}
+                            variant={role === "USER" ? "outlined" : "filled"}
+                          />
+                        ))}
+                      </Box>
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 12 }}>
                       <Link href={`/users/${user.id}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -157,12 +172,12 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                       <IconButton size="small" onClick={() => openEdit(user)} aria-label={t.users.edit}>
                         <EditOutlinedIcon fontSize="small" />
                       </IconButton>
-                      <Tooltip title={isSelf ? t.users.cantDeleteSelf : t.users.delete}>
+                      <Tooltip title={isSelf ? t.users.cantDeleteSelf : isLastAdmin ? "Viimast globaalset haldurit ei saa kustutada" : t.users.delete}>
                         <span>
                           <IconButton
                             size="small"
                             onClick={() => setDeleteTarget(user)}
-                            disabled={isSelf}
+                            disabled={isSelf || isLastAdmin}
                             sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
                             aria-label={t.users.delete}
                           >
@@ -179,7 +194,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
         </TableContainer>
       )}
 
-      <UserFormDialog open={dialogOpen} user={editingUser} onClose={closeDialog} canEditRole={canEditRoleFor(editingUser)} />
+      <UserFormDialog open={dialogOpen} user={editingUser} onClose={closeDialog} canEditRole={canEditRolesFor(editingUser)} />
 
       <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>{t.users.deleteTitle}</DialogTitle>

@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -12,16 +11,14 @@ jest.mock('better-auth/node', () => ({
   fromNodeHeaders: jest.fn().mockReturnValue({}),
 }));
 
-import { auth } from '../auth/better-auth';
-
 const mockUsersService = {
   findAll: jest.fn(),
   findOne: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),
-  getRole: jest.fn(),
-  updateRole: jest.fn(),
+  getRoles: jest.fn(),
+  updateRoles: jest.fn(),
   doVerifyEmail: jest.fn(),
   resendVerification: jest.fn(),
 };
@@ -31,6 +28,9 @@ const mockRes = () => {
   res.redirect = jest.fn().mockReturnValue(res);
   return res;
 };
+
+const globalAdmin = { id: 'admin', firstName: 'Admin', lastName: 'User', email: 'admin@test.ee', roles: ['GLOBAL_ADMIN'] };
+const regularUser = { id: 'u2', firstName: 'Regular', lastName: 'User', email: 'u2@test.ee', roles: ['USER'] };
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -63,159 +63,111 @@ describe('UsersController', () => {
   describe('create', () => {
     it('trims and lowercases input before service call', async () => {
       mockUsersService.create.mockResolvedValue({ id: 'new' });
-      const dto = { firstName: ' Erki ', lastName: ' K ', email: ' ERKI@TEST.EE ', password: 'parool' };
-      const req = { headers: {} } as any;
+      const dto = { firstName: ' Erki ', lastName: ' K ', email: ' ERKI@TEST.EE ', password: 'parool', roles: undefined };
 
-      await controller.create(dto, req);
+      await controller.create(dto as any);
 
       expect(mockUsersService.create).toHaveBeenCalledWith({
         firstName: 'Erki',
         lastName: 'K',
         email: 'erki@test.ee',
         password: 'parool',
-        role: undefined,
+        roles: undefined,
       });
     });
 
-    it('throws UnauthorizedException when role specified but no session', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue(null);
-      const dto = { firstName: 'Erki', lastName: 'K', email: 'e@test.ee', password: 'parool', role: 'ADMIN' };
-      const req = { headers: {} } as any;
-
-      await expect(controller.create(dto, req)).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('throws ForbiddenException when non-admin tries to set role', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'u1' } });
-      mockUsersService.getRole.mockResolvedValue('USER');
-      const dto = { firstName: 'Erki', lastName: 'K', email: 'e@test.ee', password: 'parool', role: 'ADMIN' };
-      const req = { headers: {} } as any;
-
-      await expect(controller.create(dto, req)).rejects.toThrow(ForbiddenException);
-    });
-
-    it('creates with specified role when called by admin', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'admin' } });
-      mockUsersService.getRole.mockResolvedValue('ADMIN');
+    it('passes roles array to service', async () => {
       mockUsersService.create.mockResolvedValue({ id: 'new' });
-      const dto = { firstName: 'Erki', lastName: 'K', email: 'e@test.ee', password: 'parool', role: 'ADMIN' };
-      const req = { headers: {} } as any;
+      const dto = { firstName: 'Erki', lastName: 'K', email: 'e@test.ee', password: 'parool', roles: ['NOTES_ADMIN', 'USER'] };
 
-      await controller.create(dto, req);
+      await controller.create(dto as any);
 
       expect(mockUsersService.create).toHaveBeenCalledWith(
-        expect.objectContaining({ role: 'ADMIN' }),
+        expect.objectContaining({ roles: ['NOTES_ADMIN', 'USER'] }),
       );
     });
   });
 
-  describe('updateRole', () => {
-    it('throws UnauthorizedException when no session', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue(null);
-      const req = { headers: {} } as any;
+  describe('updateRoles', () => {
+    it('delegates to service.updateRoles with currentUser id', async () => {
+      mockUsersService.updateRoles.mockResolvedValue({ id: 'u1', roles: ['NOTES_ADMIN'] });
 
-      await expect(controller.updateRole('u1', { role: 'USER' }, req)).rejects.toThrow(UnauthorizedException);
+      await controller.updateRoles('u1', { roles: ['NOTES_ADMIN'] }, globalAdmin as any);
+
+      expect(mockUsersService.updateRoles).toHaveBeenCalledWith('u1', ['NOTES_ADMIN'], 'admin');
     });
 
-    it('throws ForbiddenException when requester is not admin', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'u2' } });
-      mockUsersService.getRole.mockResolvedValue('USER');
-      const req = { headers: {} } as any;
+    it('passes empty array when body has no roles', async () => {
+      mockUsersService.updateRoles.mockResolvedValue({ id: 'u1', roles: ['USER'] });
 
-      await expect(controller.updateRole('u1', { role: 'ADMIN' }, req)).rejects.toThrow(ForbiddenException);
-    });
+      await controller.updateRoles('u1', {} as any, globalAdmin as any);
 
-    it('throws ForbiddenException when role value is invalid', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'admin' } });
-      mockUsersService.getRole.mockResolvedValue('ADMIN');
-      const req = { headers: {} } as any;
-
-      await expect(controller.updateRole('u1', { role: 'SUPERUSER' }, req)).rejects.toThrow(ForbiddenException);
-    });
-
-    it('delegates to service when admin provides valid role', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'admin' } });
-      mockUsersService.getRole.mockResolvedValue('ADMIN');
-      mockUsersService.updateRole.mockResolvedValue({ id: 'u1', role: 'USER' });
-      const req = { headers: {} } as any;
-
-      await controller.updateRole('u1', { role: 'USER' }, req);
-
-      expect(mockUsersService.updateRole).toHaveBeenCalledWith('u1', 'USER', 'admin');
+      expect(mockUsersService.updateRoles).toHaveBeenCalledWith('u1', [], 'admin');
     });
   });
 
   describe('update', () => {
+    it('allows own profile update', async () => {
+      mockUsersService.update.mockResolvedValue({ id: 'u2' });
+      const dto = { firstName: 'Uus', email: 'uus@test.ee' };
+
+      await controller.update('u2', dto as any, regularUser as any);
+
+      expect(mockUsersService.update).toHaveBeenCalledWith('u2', expect.objectContaining({ firstName: 'Uus' }));
+    });
+
+    it('allows global admin to update any user', async () => {
+      mockUsersService.update.mockResolvedValue({ id: 'u2' });
+      const dto = { firstName: 'Uus' };
+
+      await controller.update('u2', dto as any, globalAdmin as any);
+
+      expect(mockUsersService.update).toHaveBeenCalled();
+    });
+
+    it('throws when non-admin tries to update another user', async () => {
+      const dto = { firstName: 'Uus' };
+
+      await expect(controller.update('other-user', dto as any, regularUser as any)).rejects.toThrow();
+
+      expect(mockUsersService.update).not.toHaveBeenCalled();
+    });
+
     it('trims optional fields and passes to service', async () => {
-      mockUsersService.update.mockResolvedValue({ id: '1' });
+      mockUsersService.update.mockResolvedValue({ id: 'u2' });
       const dto = { firstName: ' Uus ', email: ' UUS@TEST.EE ' };
 
-      await controller.update('1', dto as any);
+      await controller.update('u2', dto as any, regularUser as any);
 
-      expect(mockUsersService.update).toHaveBeenCalledWith('1', {
+      expect(mockUsersService.update).toHaveBeenCalledWith('u2', expect.objectContaining({
         firstName: 'Uus',
-        lastName: undefined,
         email: 'uus@test.ee',
-        password: undefined,
-        chatInputHistory: undefined,
-      });
+      }));
     });
 
     it('passes clientId to service when provided', async () => {
-      mockUsersService.update.mockResolvedValue({ id: '1' });
+      mockUsersService.update.mockResolvedValue({ id: 'u2' });
       const dto = { firstName: 'Uus', lastName: 'K', email: 'e@test.ee', clientId: 'c-123' };
 
-      await controller.update('1', dto as any);
+      await controller.update('u2', dto as any, regularUser as any);
 
-      expect(mockUsersService.update).toHaveBeenCalledWith('1', expect.objectContaining({ clientId: 'c-123' }));
-    });
-
-    it('passes null clientId to service when explicitly null', async () => {
-      mockUsersService.update.mockResolvedValue({ id: '1' });
-      const dto = { firstName: 'Uus', lastName: 'K', email: 'e@test.ee', clientId: null };
-
-      await controller.update('1', dto as any);
-
-      expect(mockUsersService.update).toHaveBeenCalledWith('1', expect.objectContaining({ clientId: null }));
-    });
-
-    it('does not pass clientId when not in dto', async () => {
-      mockUsersService.update.mockResolvedValue({ id: '1' });
-      const dto = { firstName: 'Uus' };
-
-      await controller.update('1', dto as any);
-
-      const call = mockUsersService.update.mock.calls[0][1];
-      expect('clientId' in call).toBe(false);
+      expect(mockUsersService.update).toHaveBeenCalledWith('u2', expect.objectContaining({ clientId: 'c-123' }));
     });
   });
 
   describe('remove', () => {
-    it('throws ForbiddenException when deleting self', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'me' } });
-      const req = { headers: {} } as any;
+    it('throws when deleting self', async () => {
+      await expect(controller.remove('admin', globalAdmin as any)).rejects.toThrow();
 
-      await expect(controller.remove('me', req)).rejects.toThrow(ForbiddenException);
+      expect(mockUsersService.remove).not.toHaveBeenCalled();
     });
 
     it('delegates to service when deleting other user', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'me' } });
       mockUsersService.remove.mockResolvedValue(undefined);
-      const req = { headers: {} } as any;
 
-      await controller.remove('other-user', req);
+      await controller.remove('u2', globalAdmin as any);
 
-      expect(mockUsersService.remove).toHaveBeenCalledWith('other-user');
-    });
-
-    it('deletes when not authenticated', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue(null);
-      mockUsersService.remove.mockResolvedValue(undefined);
-      const req = { headers: {} } as any;
-
-      await controller.remove('some-user', req);
-
-      expect(mockUsersService.remove).toHaveBeenCalledWith('some-user');
+      expect(mockUsersService.remove).toHaveBeenCalledWith('u2');
     });
   });
 

@@ -14,12 +14,14 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from "@nestjs/
 import { OrganisationsService } from "./organisations.service";
 import { CreateOrganisationDto } from "./dto/create-organisation.dto";
 import { UpdateOrganisationDto } from "./dto/update-organisation.dto";
+import { Public, Roles } from "../auth/decorators/roles.decorator";
 
 @ApiTags("organisations")
 @Controller("organisations")
 export class OrganisationsController {
   constructor(private readonly organisationsService: OrganisationsService) {}
 
+  @Public()
   @ApiOperation({ summary: "List all organisations" })
   @ApiResponse({ status: 200 })
   @Get()
@@ -27,6 +29,7 @@ export class OrganisationsController {
     return this.organisationsService.findAll();
   }
 
+  @Public()
   @ApiOperation({ summary: "Search organisations by name or reg code" })
   @ApiQuery({ name: "q", type: String })
   @ApiResponse({ status: 200 })
@@ -35,6 +38,7 @@ export class OrganisationsController {
     return this.organisationsService.search(q ?? "");
   }
 
+  @Public()
   @ApiOperation({ summary: "Get organisation by id" })
   @ApiParam({ name: "id", type: String })
   @ApiResponse({ status: 200 })
@@ -44,6 +48,7 @@ export class OrganisationsController {
     return this.organisationsService.findOne(id);
   }
 
+  @Roles("ORG_ADMIN", "GLOBAL_ADMIN")
   @ApiOperation({ summary: "Create organisation" })
   @ApiResponse({ status: 201 })
   @Post()
@@ -59,6 +64,7 @@ export class OrganisationsController {
     });
   }
 
+  @Roles("ORG_ADMIN", "GLOBAL_ADMIN")
   @ApiOperation({ summary: "Update organisation" })
   @ApiParam({ name: "id", type: String })
   @ApiResponse({ status: 200 })
@@ -75,6 +81,7 @@ export class OrganisationsController {
     });
   }
 
+  @Roles("ORG_ADMIN", "GLOBAL_ADMIN")
   @ApiOperation({ summary: "Delete organisation" })
   @ApiParam({ name: "id", type: String })
   @ApiResponse({ status: 204 })

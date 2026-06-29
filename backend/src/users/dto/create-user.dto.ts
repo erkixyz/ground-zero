@@ -1,28 +1,35 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
+import { ALL_ROLES } from "../../auth/permissions";
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'John' })
+  @ApiProperty({ example: "John" })
   @IsString()
-  @IsNotEmpty({ message: 'Eesnimi on kohustuslik' })
+  @IsNotEmpty({ message: "Eesnimi on kohustuslik" })
   firstName: string;
 
-  @ApiProperty({ example: 'Doe' })
+  @ApiProperty({ example: "Doe" })
   @IsString()
-  @IsNotEmpty({ message: 'Perenimi on kohustuslik' })
+  @IsNotEmpty({ message: "Perenimi on kohustuslik" })
   lastName: string;
 
-  @ApiProperty({ example: 'john@example.com' })
-  @IsEmail({}, { message: 'Vigane e-posti aadress' })
+  @ApiProperty({ example: "john@example.com" })
+  @IsEmail({}, { message: "Vigane e-posti aadress" })
   email: string;
 
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: "password123" })
   @IsString()
-  @MinLength(6, { message: 'Parool peab olema vähemalt 6 tähemärki' })
+  @MinLength(6, { message: "Parool peab olema vähemalt 6 tähemärki" })
   password: string;
 
-  @ApiPropertyOptional({ enum: ['USER', 'ADMIN'], example: 'USER' })
+  @ApiPropertyOptional({
+    type: [String],
+    enum: ALL_ROLES,
+    example: ["USER"],
+    description: "One or more roles. Defaults to [USER] if not provided.",
+  })
   @IsOptional()
-  @IsEnum(['USER', 'ADMIN'], { message: 'Roll peab olema USER või ADMIN' })
-  role?: string;
+  @IsArray()
+  @IsEnum(ALL_ROLES, { each: true, message: "Vigane rolli väärtus" })
+  roles?: string[];
 }

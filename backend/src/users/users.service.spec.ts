@@ -114,87 +114,93 @@ describe('UsersService', () => {
             email: 'erki@test.ee',
             name: 'Erki K',
             emailVerified: true,
-            role: 'USER',
+            roles: ['USER'],
           }),
         }),
       );
     });
 
-    it('creates first user with ADMIN role regardless of requested role', async () => {
+    it('creates first user with GLOBAL_ADMIN role regardless of requested roles', async () => {
       const created = { id: 'first-id', firstName: 'Erki', lastName: 'K', email: 'erki@test.ee', createdAt: new Date() };
       mockPrisma.write.user.findUnique.mockResolvedValue(null);
       mockPrisma.read.user.count.mockResolvedValue(0);
       mockPrisma.write.user.create.mockResolvedValue(created);
       mockMail.sendWelcome.mockResolvedValue(undefined);
 
-      await service.create({ ...userData, role: 'USER' as any });
+      await service.create({ ...userData, roles: ['USER'] });
 
       expect(mockPrisma.write.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ role: 'ADMIN' }),
+          data: expect.objectContaining({ roles: ['GLOBAL_ADMIN'] }),
         }),
       );
     });
   });
 
-  describe('getRole', () => {
-    it('returns role when user exists', async () => {
-      mockPrisma.read.user.findUnique.mockResolvedValue({ role: 'ADMIN' });
+  describe('getRoles', () => {
+    it('returns roles when user exists', async () => {
+      mockPrisma.read.user.findUnique.mockResolvedValue({ roles: ['GLOBAL_ADMIN'] });
 
-      const result = await service.getRole('u1');
+      const result = await service.getRoles('u1');
 
-      expect(result).toBe('ADMIN');
-      expect(mockPrisma.read.user.findUnique).toHaveBeenCalledWith({ where: { id: 'u1' }, select: { role: true } });
+      expect(result).toEqual(['GLOBAL_ADMIN']);
+      expect(mockPrisma.read.user.findUnique).toHaveBeenCalledWith({ where: { id: 'u1' }, select: { roles: true } });
     });
 
-    it('returns null when user not found', async () => {
+    it('returns empty array when user not found', async () => {
       mockPrisma.read.user.findUnique.mockResolvedValue(null);
 
-      const result = await service.getRole('missing');
+      const result = await service.getRoles('missing');
 
-      expect(result).toBeNull();
+      expect(result).toEqual([]);
     });
   });
 
-  describe('updateRole', () => {
-    it('throws ForbiddenException when trying to change own role', async () => {
-      await expect(service.updateRole('u1', 'USER' as any, 'u1')).rejects.toThrow(ForbiddenException);
+  describe('updateRoles', () => {
+    it('throws ForbiddenException when trying to change own roles', async () => {
+      await expect(service.updateRoles('u1', ['USER'], 'u1')).rejects.toThrow(ForbiddenException);
     });
 
     it('throws NotFoundException when user not found', async () => {
       mockPrisma.write.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateRole('missing', 'USER' as any, 'requester')).rejects.toThrow(NotFoundException);
+      await expect(service.updateRoles('missing', ['USER'], 'requester')).rejects.toThrow(NotFoundException);
     });
 
-    it('throws ForbiddenException when demoting last admin', async () => {
-      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', role: 'ADMIN' });
+    it('throws ForbiddenException when no valid roles provided', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', roles: ['USER'] });
+
+      await expect(service.updateRoles('u1', ['INVALID_ROLE'], 'requester')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when demoting last global admin', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', roles: ['GLOBAL_ADMIN'] });
       mockPrisma.read.user.count.mockResolvedValue(1);
 
-      await expect(service.updateRole('u1', 'USER' as any, 'requester')).rejects.toThrow(ForbiddenException);
+      await expect(service.updateRoles('u1', ['USER'], 'requester')).rejects.toThrow(ForbiddenException);
     });
 
-    it('updates role to ADMIN without last-admin check', async () => {
-      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER' });
-      mockPrisma.write.user.update.mockResolvedValue({ id: 'u1', role: 'ADMIN' });
+    it('updates to GLOBAL_ADMIN without last-admin check', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', roles: ['USER'] });
+      mockPrisma.write.user.update.mockResolvedValue({ id: 'u1', roles: ['GLOBAL_ADMIN'] });
 
-      await service.updateRole('u1', 'ADMIN' as any, 'requester');
+      await service.updateRoles('u1', ['GLOBAL_ADMIN'], 'requester');
 
       expect(mockPrisma.read.user.count).not.toHaveBeenCalled();
       expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'u1' }, data: { role: 'ADMIN' } }),
+        expect.objectContaining({ where: { id: 'u1' }, data: { roles: ['GLOBAL_ADMIN'] } }),
       );
     });
 
-    it('updates role to USER when multiple admins exist', async () => {
-      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', role: 'ADMIN' });
+    it('updates to USER when multiple global admins exist', async () => {
+      mockPrisma.write.user.findUnique.mockResolvedValue({ id: 'u1', roles: ['GLOBAL_ADMIN'] });
       mockPrisma.read.user.count.mockResolvedValue(2);
-      mockPrisma.write.user.update.mockResolvedValue({ id: 'u1', role: 'USER' });
+      mockPrisma.write.user.update.mockResolvedValue({ id: 'u1', roles: ['USER'] });
 
-      await service.updateRole('u1', 'USER' as any, 'requester');
+      await service.updateRoles('u1', ['USER'], 'requester');
 
       expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'u1' }, data: { role: 'USER' } }),
+        expect.objectContaining({ where: { id: 'u1' }, data: { roles: ['USER'] } }),
       );
     });
   });

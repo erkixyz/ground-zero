@@ -1,5 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
-import { API, createTestUser, deleteTestUser } from "./helpers";
+import { API, createTestUser, deleteTestUser, getAuthCookie } from "./helpers";
+
+const TEST_CREDS = { email: "playwright@test.local", password: "Test1234!" };
 
 async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/");
@@ -18,11 +20,17 @@ test.describe("Kasutajate haldus", () => {
     const user = await createTestUser(request);
     adminId = user.id;
 
-    const res = await request.post(`${API}/api/users`, {
-      data: { firstName: "Victim", lastName: "User", email: `victim-${Date.now()}@test.local`, password: "Test1234!" },
+    // Create victim user via better-auth signup (public endpoint)
+    const email = `victim-${Date.now()}@test.local`;
+    await request.post(`${API}/api/auth/sign-up/email`, {
+      data: { email, password: "Test1234!", name: "Victim User", firstName: "Victim", lastName: "User" },
     });
-    const victim = await res.json();
-    victimId = victim.id;
+    // Get victim's id from login response
+    const loginRes = await request.post(`${API}/api/auth/sign-in/email`, {
+      data: { email, password: "Test1234!" },
+    });
+    const loginData = await loginRes.json().catch(() => ({}));
+    victimId = loginData?.user?.id;
   });
 
   test.afterAll(async ({ request }) => {
@@ -61,9 +69,12 @@ test.describe("Kasutajate haldus", () => {
 
     await expect(page.getByText(email)).toBeVisible({ timeout: 8000 });
 
-    const res = await request.get(`${API}/api/users`);
+    const cookie = await getAuthCookie(request);
+    const res = await request.get(`${API}/api/users`, {
+      headers: cookie ? { Cookie: cookie } : {},
+    });
     const users = await res.json();
-    const created = users.find((u: { email: string }) => u.email === email);
+    const created = Array.isArray(users) ? users.find((u: { email: string }) => u.email === email) : null;
     if (created) await deleteTestUser(request, created.id);
   });
 

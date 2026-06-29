@@ -11,8 +11,6 @@ jest.mock('better-auth/node', () => ({
   fromNodeHeaders: jest.fn().mockReturnValue({}),
 }));
 
-import { auth } from '../auth/better-auth';
-
 const mockNotesService = {
   findAll: jest.fn(),
   findOne: jest.fn(),
@@ -57,37 +55,24 @@ describe('NotesController', () => {
   });
 
   describe('create', () => {
-    it('creates note with session userId when authenticated', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue({ user: { id: 'user-1' } });
+    it('creates note with currentUser id', async () => {
       mockNotesService.create.mockResolvedValue({ id: 10 });
       const dto = { title: '  Märge  ', content: '  Sisu  ', category: 'too', pinned: true };
-      const req = { headers: {} } as any;
+      const user = { id: 'user-1', roles: ['USER'] } as any;
 
-      await controller.create(dto, req);
+      await controller.create(dto, user);
 
       expect(mockNotesService.create).toHaveBeenCalledWith('Märge', 'Sisu', 'too', true, 'user-1');
     });
 
-    it('creates note without authorId when not authenticated', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue(null);
-      mockNotesService.create.mockResolvedValue({ id: 11 });
-      const dto = { title: 'Märge', content: 'Sisu', category: undefined, pinned: undefined };
-      const req = { headers: {} } as any;
-
-      await controller.create(dto, req);
-
-      expect(mockNotesService.create).toHaveBeenCalledWith('Märge', 'Sisu', undefined, undefined, undefined);
-    });
-
     it('trims title and content whitespace', async () => {
-      (auth.api.getSession as unknown as jest.Mock).mockResolvedValue(null);
       mockNotesService.create.mockResolvedValue({ id: 12 });
       const dto = { title: '  Ruumiga  ', content: '  Sisu  ' };
-      const req = { headers: {} } as any;
+      const user = { id: 'user-1', roles: ['USER'] } as any;
 
-      await controller.create(dto as any, req);
+      await controller.create(dto as any, user);
 
-      expect(mockNotesService.create).toHaveBeenCalledWith('Ruumiga', 'Sisu', undefined, undefined, undefined);
+      expect(mockNotesService.create).toHaveBeenCalledWith('Ruumiga', 'Sisu', undefined, undefined, 'user-1');
     });
   });
 
