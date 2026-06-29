@@ -15,6 +15,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import DomainOutlinedIcon from "@mui/icons-material/DomainOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
@@ -39,10 +40,17 @@ interface ClientResult {
   regCode: string | null;
 }
 
+interface OrganisationResult {
+  id: string;
+  name: string;
+  regCode: string | null;
+}
+
 interface SearchResults {
   notes: NoteResult[];
   users: UserResult[];
   clients: ClientResult[];
+  organisations: OrganisationResult[];
 }
 
 interface Props {
@@ -97,9 +105,10 @@ export default function GlobalSearch({ open, onClose }: Props) {
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const totalItems = (results?.notes.length ?? 0) + (results?.users.length ?? 0) + (results?.clients.length ?? 0);
+  const totalItems = (results?.notes.length ?? 0) + (results?.users.length ?? 0) + (results?.clients.length ?? 0) + (results?.organisations.length ?? 0);
   const usersStart = results?.notes.length ?? 0;
   const clientsStart = (results?.notes.length ?? 0) + (results?.users.length ?? 0);
+  const orgsStart = (results?.notes.length ?? 0) + (results?.users.length ?? 0) + (results?.clients.length ?? 0);
 
   const flatPaths = useMemo<string[]>(() => {
     if (!results) return [];
@@ -107,6 +116,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
       ...results.notes.map((n) => `/notes/${n.id}`),
       ...results.users.map((u) => `/users/${u.id}`),
       ...results.clients.map((c) => `/clients/${c.id}`),
+      ...(results.organisations ?? []).map((o) => `/organisations/${o.id}`),
     ];
   }, [results]);
 
@@ -305,6 +315,39 @@ export default function GlobalSearch({ open, onClose }: Props) {
                         <ListItemText
                           primary={<Highlight text={client.name} query={query} />}
                           secondary={client.regCode ? <Highlight text={client.regCode} query={query} /> : undefined}
+                          slotProps={{
+                            primary: { component: "div", sx: { fontSize: 14, fontWeight: 500 } },
+                            secondary: { component: "div", sx: { fontSize: 12 } },
+                          }}
+                        />
+                      </ListItemButton>
+                    ))}
+                  </>
+                )}
+
+                {results && results.organisations && results.organisations.length > 0 && (
+                  <>
+                    {(results.notes.length > 0 || results.users.length > 0 || results.clients.length > 0) && <Divider sx={{ my: 0.5 }} />}
+                    <Typography
+                      variant="overline"
+                      sx={{ px: 2, pt: 1, pb: 0.5, display: "block", color: "text.disabled", fontSize: 10 }}
+                    >
+                      {t.search.organisations}
+                    </Typography>
+                    {results.organisations.map((org, i) => (
+                      <ListItemButton
+                        key={org.id}
+                        ref={(el) => { itemRefs.current[orgsStart + i] = el; }}
+                        selected={activeIndex === orgsStart + i}
+                        onClick={() => navigate(`/organisations/${org.id}`)}
+                        onMouseMove={() => setActiveIndex(orgsStart + i)}
+                      >
+                        <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
+                          <DomainOutlinedIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={<Highlight text={org.name} query={query} />}
+                          secondary={org.regCode ? <Highlight text={org.regCode} query={query} /> : undefined}
                           slotProps={{
                             primary: { component: "div", sx: { fontSize: 14, fontWeight: 500 } },
                             secondary: { component: "div", sx: { fontSize: 12 } },

@@ -465,7 +465,9 @@ Every user account has a role: `USER` (Tavakasutaja) or `ADMIN` (Admin).
 | **NotesModule** | `NotesController` | `NotesService` | Notes CRUD with category and pinning; email delivery of notes; broadcasts mutations via RabbitMQ |
 | **FilesModule** | `FilesController` | `FilesService` | Multipart file upload/download/delete; max 10 MB; files stored in MinIO; signed URLs for downloads |
 | **ChatModule** | `ChatController` | `ChatService` | Streaming LLM chat via Ollama; RAG context injection; tool-calling loop (max 6 iterations) |
-| **SearchModule** | `SearchController` | `SearchService` | Full-text search across notes (title, content) and users (name, email) |
+| **ClientsModule** | `ClientsController` | `ClientsService` | Client CRUD with address fields; search endpoint |
+| **OrganisationsModule** | `OrganisationsController` | `OrganisationsService` | Organisation CRUD with address and reg-code fields; search endpoint |
+| **SearchModule** | `SearchController` | `SearchService` | Full-text search across notes, users, clients, and organisations |
 | **StorageModule** *(global)* | — | `StorageService` | S3-compatible MinIO wrapper; bucket initialisation; presigned URL generation |
 | **MessagingModule** *(global)* | — | `MessagingService` | RabbitMQ `notes_events` fanout exchange; publishes and consumes cross-instance events |
 | **EventsModule** *(global)* | — | `EventsGateway` | Socket.io WebSocket gateway; emits `notesChanged` and `toast` events to connected clients |
@@ -493,7 +495,17 @@ Every user account has a role: `USER` (Tavakasutaja) or `ADMIN` (Admin).
 | `POST` | `/api/users/resend-verification` | Resend email verification link |
 | `GET` | `/api/users/verify-email` | Email verification redirect |
 | `POST` | `/api/chat` | Streaming LLM chat with tool-calling |
-| `GET` | `/api/search?q=` | Full-text search across notes and users |
+| `GET` | `/api/clients` | List all clients |
+| `GET` | `/api/clients/:id` | Fetch client |
+| `POST` | `/api/clients` | Create client |
+| `PATCH` | `/api/clients/:id` | Update client |
+| `DELETE` | `/api/clients/:id` | Delete client |
+| `GET` | `/api/organisations` | List all organisations |
+| `GET` | `/api/organisations/:id` | Fetch organisation |
+| `POST` | `/api/organisations` | Create organisation |
+| `PATCH` | `/api/organisations/:id` | Update organisation |
+| `DELETE` | `/api/organisations/:id` | Delete organisation |
+| `GET` | `/api/search?q=` | Full-text search across notes, users, clients, and organisations |
 | `GET` | `/metrics` | Prometheus metrics (HTTP request counts and latencies) |
 | `*` | `/api/auth/*` | Better Auth — sign-in, sign-up, session, OAuth callback |
 | `GET` | `/docs` | Swagger UI — interactive API documentation |
@@ -529,21 +541,24 @@ Every user account has a role: `USER` (Tavakasutaja) or `ADMIN` (Admin).
 | `/notes/[id]` | Note detail view |
 | `/users` | User management — **admin only** |
 | `/users/[id]` | User detail view |
+| `/clients` | Client register — list, create, edit, delete |
+| `/clients/[id]` | Client detail view |
+| `/organisations` | Organisation register — list, create, edit, delete |
+| `/organisations/[id]` | Organisation detail view |
 | `/chat` | AI chat with RAG context, tool-calling, and session input history |
 | `/profile` | Authenticated user's profile (read-only) |
 | `/reset-password` | Password reset (token from email) |
 
 ### Global search
 
-A full-text search dialog searches across both notes and users simultaneously.
+A full-text search dialog searches across notes, users, clients, and organisations simultaneously.
 
 - Open with the **search icon** in the top bar
-- Results are grouped by type (Notes / Users) and limited to 5 per group
+- Results are grouped by type and limited to 5 per group
 - Matching text is highlighted inline; note snippets show context around the match
 - Navigate results with **↑ / ↓** arrow keys and confirm with **Enter**
-- Clicking a note navigates to `/notes/[id]`; clicking a user navigates to `/users/[id]`
 
-**API endpoint:** `GET /api/search?q=<query>` — returns `{ notes: [...], users: [...] }`. Notes are matched against `title` and `content`; users against `firstName`, `lastName`, and `email` (all case-insensitive).
+**API endpoint:** `GET /api/search?q=<query>` — returns `{ notes: [...], users: [...], clients: [...], organisations: [...] }` (all case-insensitive).
 
 ### Toast notifications
 

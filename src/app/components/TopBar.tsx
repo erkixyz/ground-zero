@@ -22,6 +22,7 @@ import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import DomainOutlinedIcon from "@mui/icons-material/DomainOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import SearchIcon from "@mui/icons-material/Search";
@@ -132,6 +133,18 @@ export default function TopBar() {
             }}
           >
             {t.clients.title}
+          </Button>
+          <Button
+            component={Link}
+            href="/organisations"
+            size="small"
+            startIcon={<DomainOutlinedIcon />}
+            sx={{
+              color: pathname.startsWith("/organisations") ? "primary.main" : "text.secondary",
+              fontWeight: pathname.startsWith("/organisations") ? 700 : 400,
+            }}
+          >
+            {t.organisations.title}
           </Button>
           <Button
             component={Link}
