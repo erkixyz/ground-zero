@@ -469,7 +469,7 @@ Every user account has a role: `USER` (Tavakasutaja) or `ADMIN` (Admin).
 | **StorageModule** *(global)* | — | `StorageService` | S3-compatible MinIO wrapper; bucket initialisation; presigned URL generation |
 | **MessagingModule** *(global)* | — | `MessagingService` | RabbitMQ `notes_events` fanout exchange; publishes and consumes cross-instance events |
 | **EventsModule** *(global)* | — | `EventsGateway` | Socket.io WebSocket gateway; emits `notesChanged` and `toast` events to connected clients |
-| **MailModule** *(global)* | — | `MailService` | Nodemailer + Handlebars templates; SMTP / MailHog depending on environment |
+| **MailModule** *(global)* | — | `MailService` | Nodemailer + Handlebars templates; SMTP / Mailpit depending on environment |
 
 ### API routes
 
@@ -726,7 +726,7 @@ In `--dev` mode (`docker-compose.dev.yml` overlay):
 | `GOOGLE_CLIENT_ID` | — | Google OAuth client ID (optional; enables Google sign-in) |
 | `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
 | `MAIL_HOST` | `localhost` | SMTP server host |
-| `MAIL_PORT` | `1025` | SMTP server port (1025 = MailHog in dev) |
+| `MAIL_PORT` | `1025` | SMTP server port (1025 = Mailpit in dev) |
 | `MAIL_SECURE` | `false` | Use TLS (`true`/`false`) |
 | `MAIL_USER` | — | SMTP username (optional) |
 | `MAIL_PASS` | — | SMTP password (optional) |

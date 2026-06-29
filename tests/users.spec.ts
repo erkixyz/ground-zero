@@ -12,13 +12,21 @@ async function loginAs(page: Page, email: string, password: string) {
 
 test.describe("Kasutajate haldus", () => {
   let adminId: number;
+  let victimId: number;
 
   test.beforeAll(async ({ request }) => {
     const user = await createTestUser(request);
     adminId = user.id;
+
+    const res = await request.post(`${API}/api/users`, {
+      data: { firstName: "Victim", lastName: "User", email: `victim-${Date.now()}@test.local`, password: "Test1234!" },
+    });
+    const victim = await res.json();
+    victimId = victim.id;
   });
 
   test.afterAll(async ({ request }) => {
+    if (victimId) await deleteTestUser(request, victimId);
     if (adminId) await deleteTestUser(request, adminId);
   });
 

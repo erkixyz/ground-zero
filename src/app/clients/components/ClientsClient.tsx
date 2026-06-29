@@ -61,23 +61,24 @@ export default function ClientsClient({ clients }: { clients: ClientRow[] }) {
         </Button>
       </Stack>
 
-      {clients.length === 0 ? (
-        <Typography sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-          {t.clients.empty}
-        </Typography>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>{t.clients.name}</TableCell>
+              <TableCell>{t.clients.regCode}</TableCell>
+              <TableCell>{t.clients.added}</TableCell>
+              <TableCell align="right">{t.clients.actions}</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {clients.length === 0 ? (
               <TableRow>
-                <TableCell>{t.clients.name}</TableCell>
-                <TableCell>{t.clients.regCode}</TableCell>
-                <TableCell>{t.clients.added}</TableCell>
-                <TableCell align="right">{t.clients.actions}</TableCell>
+                <TableCell colSpan={4} sx={{ textAlign: "center", color: "text.secondary", py: 4 }}>
+                  {t.clients.empty}
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {clients.map((client) => (
+            ) : clients.map((client) => (
                 <TableRow key={client.id} hover sx={{ cursor: "pointer" }}>
                   <TableCell>
                     <Link href={`/clients/${client.id}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -114,7 +115,6 @@ export default function ClientsClient({ clients }: { clients: ClientRow[] }) {
             </TableBody>
           </Table>
         </TableContainer>
-      )}
 
       <ClientFormDialog open={dialogOpen} client={editingClient} onClose={closeDialog} />
 

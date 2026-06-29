@@ -100,7 +100,7 @@ services:
       - SESSION_SECRET=change-me-in-production
       - CORS_ORIGIN=http://localhost:3000
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - MAIL_HOST=mailhog
+      - MAIL_HOST=mailpit
       - MAIL_PORT=1025
       - MAIL_FROM=noreply@ground-zero.local
       - APP_URL=http://localhost:3000
@@ -143,7 +143,7 @@ services:
       - SESSION_SECRET=change-me-in-production
       - CORS_ORIGIN=http://localhost:3000
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - MAIL_HOST=mailhog
+      - MAIL_HOST=mailpit
       - MAIL_PORT=1025
       - MAIL_FROM=noreply@ground-zero.local
       - APP_URL=http://localhost:3000
@@ -428,8 +428,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  mailhog:
-    image: mailhog/mailhog:latest
+  mailpit:
+    image: axllent/mailpit:latest
     ports:
       - "1025:1025"
       - "8025:8025"

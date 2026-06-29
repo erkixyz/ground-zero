@@ -127,7 +127,7 @@ describe('ClientsService', () => {
 
       expect(result).toEqual(created);
       expect(mockPrisma.write.client.create).toHaveBeenCalledWith({
-        data: { name: 'Acme OÜ', regCode: null },
+        data: { name: 'Acme OÜ', regCode: null, street: null, city: null, zip: null, country: null },
         select: expect.any(Object),
       });
     });
@@ -139,7 +139,7 @@ describe('ClientsService', () => {
       await service.create({ name: 'Beta AS', regCode: ' 87654321 ' });
 
       expect(mockPrisma.write.client.create).toHaveBeenCalledWith({
-        data: { name: 'Beta AS', regCode: '87654321' },
+        data: { name: 'Beta AS', regCode: '87654321', street: null, city: null, zip: null, country: null },
         select: expect.any(Object),
       });
     });
@@ -151,7 +151,7 @@ describe('ClientsService', () => {
       await service.create({ name: 'Gamma OÜ', regCode: '' });
 
       expect(mockPrisma.write.client.create).toHaveBeenCalledWith({
-        data: { name: 'Gamma OÜ', regCode: null },
+        data: { name: 'Gamma OÜ', regCode: null, street: null, city: null, zip: null, country: null },
         select: expect.any(Object),
       });
     });

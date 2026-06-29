@@ -28,8 +28,8 @@ export class CreateClientDto {
   @IsString()
   zip?: string;
 
-  @ApiProperty({ example: "EE" })
+  @ApiPropertyOptional({ example: "EE" })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Riik on kohustuslik" })
-  country: string;
+  country?: string;
 }

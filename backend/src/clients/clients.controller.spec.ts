@@ -59,18 +59,18 @@ describe('ClientsController', () => {
       const created = { id: 'new', name: 'Acme OÜ', regCode: '12345678', createdAt: new Date() };
       mockClientsService.create.mockResolvedValue(created);
 
-      const result = await controller.create({ name: 'Acme OÜ', regCode: '12345678' });
+      const result = await controller.create({ name: 'Acme OÜ', regCode: '12345678', country: 'EE' });
 
-      expect(mockClientsService.create).toHaveBeenCalledWith({ name: 'Acme OÜ', regCode: '12345678' });
+      expect(mockClientsService.create).toHaveBeenCalledWith({ name: 'Acme OÜ', regCode: '12345678', street: undefined, city: undefined, zip: undefined, country: 'EE' });
       expect(result).toEqual(created);
     });
 
     it('passes undefined regCode when not provided', async () => {
       mockClientsService.create.mockResolvedValue({ id: 'new', name: 'Acme OÜ', regCode: null, createdAt: new Date() });
 
-      await controller.create({ name: 'Acme OÜ' });
+      await controller.create({ name: 'Acme OÜ', country: 'EE' });
 
-      expect(mockClientsService.create).toHaveBeenCalledWith({ name: 'Acme OÜ', regCode: undefined });
+      expect(mockClientsService.create).toHaveBeenCalledWith({ name: 'Acme OÜ', regCode: undefined, street: undefined, city: undefined, zip: undefined, country: 'EE' });
     });
   });
 
@@ -81,7 +81,7 @@ describe('ClientsController', () => {
 
       const result = await controller.update('1', { name: 'Uus Nimi' });
 
-      expect(mockClientsService.update).toHaveBeenCalledWith('1', { name: 'Uus Nimi', regCode: undefined });
+      expect(mockClientsService.update).toHaveBeenCalledWith('1', { name: 'Uus Nimi', regCode: undefined, street: undefined, city: undefined, zip: undefined, country: undefined });
       expect(result).toEqual(updated);
     });
 
