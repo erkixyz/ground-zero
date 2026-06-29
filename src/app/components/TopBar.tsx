@@ -52,7 +52,7 @@ const SERVICE_LINKS = (infrastructure: string) => [
     items: [
       { label: "Grafana", hint: "admin / admin", href: "http://localhost:3002", icon: <BarChartIcon fontSize="small" /> },
       { label: "Prometheus", hint: "localhost:9090", href: "http://localhost:9090", icon: <TimelineIcon fontSize="small" /> },
-      { label: "Mailhog", hint: "localhost:8025", href: "http://localhost:8025", icon: <EmailIcon fontSize="small" /> },
+      { label: "Mailpit", hint: "localhost:8025", href: "http://localhost:8025", icon: <EmailIcon fontSize="small" /> },
       { label: "Loki", hint: "Grafana Explore → Loki", href: "http://localhost:3002/explore?orgId=1&left=%7B%22datasource%22%3A%22Loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D", icon: <TextSnippetIcon fontSize="small" /> },
     ],
   },

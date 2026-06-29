@@ -53,6 +53,7 @@ echo   Prometheus  :  http://localhost:9090
 echo   Nginx LB    :  http://localhost:8080/nginx-status
 echo   HAProxy DB  :  http://localhost:8404
 echo   HAProxy Redis: http://localhost:8405
+echo   Mailpit     :  http://localhost:8025
 echo.
 echo Logide vaatamiseks: docker compose logs -f
 

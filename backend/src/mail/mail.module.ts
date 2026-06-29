@@ -9,7 +9,7 @@ import { MailService } from "./mail.service";
   imports: [
     MailerModule.forRoot({
       transport: {
-        host: process.env.MAIL_HOST || "mailhog",
+        host: process.env.MAIL_HOST || "mailpit",
         port: parseInt(process.env.MAIL_PORT || "1025"),
         ignoreTLS: true,
         secure: false,

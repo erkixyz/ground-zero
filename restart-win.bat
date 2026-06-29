@@ -35,6 +35,7 @@ echo   Redis LB  :  http://localhost:8405
 echo   Prometheus:  http://localhost:9090
 echo   Grafana   :  http://localhost:3002  (admin/admin)
 echo   Loki      :  http://localhost:3100
+echo   Mailpit   :  http://localhost:8025
 echo.
 echo Logide vaatamiseks: docker compose logs -f
 
