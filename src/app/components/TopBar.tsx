@@ -17,7 +17,6 @@ import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Box from "@mui/material/Box";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
-import StorageIcon from "@mui/icons-material/Storage";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
@@ -102,8 +101,26 @@ export default function TopBar() {
     <>
       <AppBar position="sticky">
         <Toolbar sx={{ gap: 1 }}>
-          <StorageIcon sx={{ color: "primary.main" }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, mr: 1 }}>
+          <Box
+            component="svg"
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            sx={{ flexShrink: 0, color: "primary.contrastText" }}
+          >
+            <circle cx="15" cy="15" r="2.5" fill="currentColor" />
+            <circle cx="15" cy="15" r="9.5" stroke="currentColor" strokeWidth="1.8" />
+            <line x1="15" y1="0.5" x2="15" y2="5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="15" y1="25" x2="15" y2="29.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="0.5" y1="15" x2="5" y2="15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="25" y1="15" x2="29.5" y2="15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </Box>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, mr: 1, display: { xs: "none", md: "block" } }}
+          >
             Ground Zero
           </Typography>
 
