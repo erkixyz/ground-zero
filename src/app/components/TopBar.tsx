@@ -198,7 +198,11 @@ export default function TopBar() {
             </Tooltip>
 
             <Tooltip title={t.nav.menu}>
-              <IconButton size="small" onClick={() => setMenuOpen(true)} sx={{ color: "text.secondary" }}>
+              <IconButton
+                size="small"
+                onClick={() => setMenuOpen(true)}
+                sx={{ color: "text.secondary", display: { xs: "flex", md: "none" } }}
+              >
                 <MenuIcon fontSize="small" />
               </IconButton>
             </Tooltip>
