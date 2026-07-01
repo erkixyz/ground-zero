@@ -14,6 +14,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes, ApiBody } from "@nestjs/swagger";
 import { FilesService } from "./files.service";
 import { NoteFileEntity } from "../notes/entities/note-file.entity";
+import { Public } from "../auth/decorators/roles.decorator";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -22,6 +23,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
+  @Public()
   @ApiOperation({ summary: 'Upload file to note', description: 'Attach a file to a note. Max size: 10 MB.' })
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'noteId', type: Number })
@@ -52,6 +54,7 @@ export class FilesController {
     return this.filesService.upload(noteId, file);
   }
 
+  @Public()
   @ApiOperation({ summary: 'Delete file from note' })
   @ApiParam({ name: 'noteId', type: Number })
   @ApiParam({ name: 'fileId', type: Number })

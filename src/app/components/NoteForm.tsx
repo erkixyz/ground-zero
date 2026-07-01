@@ -57,15 +57,17 @@ export default function NoteForm() {
     (async () => {
       setUploading(true);
       try {
+        let uploadFailed = false;
         for (const file of files) {
           const fd = new FormData();
           fd.append("file", file);
-          await fetch(
+          const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/api/notes/${state.noteId}/files`,
-            { method: "POST", body: fd },
+            { method: "POST", body: fd, credentials: "include" },
           );
+          if (!res.ok) uploadFailed = true;
         }
-        showToast(t.notes.saved);
+        showToast(uploadFailed ? t.notes.uploadFilesError : t.notes.saved, uploadFailed ? "error" : "success");
       } finally {
         setUploading(false);
         setFiles([]);
