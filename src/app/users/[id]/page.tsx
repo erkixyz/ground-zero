@@ -11,10 +11,11 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import EmailIcon from "@mui/icons-material/EmailOutlined";
 import CalendarTodayIcon from "@mui/icons-material/CalendarTodayOutlined";
-import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import DomainOutlinedIcon from "@mui/icons-material/DomainOutlined";
 import Link from "next/link";
 import { getServerTranslations } from "@/i18n/server";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import type { UserRow } from "../components/UserFormDialog";
 
 export default async function UserPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +26,11 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
   let fetchError: string | null = null;
 
   try {
-    const res = await fetch(`${process.env.API_URL}/api/users/${id}`, { cache: "no-store" });
+    const cookie = (await headers()).get("cookie") ?? "";
+    const res = await fetch(`${process.env.API_URL}/api/users/${id}`, {
+      cache: "no-store",
+      headers: cookie ? { Cookie: cookie } : {},
+    });
     if (res.status === 404) notFound();
     if (!res.ok) throw new Error(`${res.status}`);
     user = await res.json();
@@ -76,18 +81,18 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
                       {t.users.added}: {new Date(user.createdAt).toLocaleDateString(t.common.localeCode)}
                     </Typography>
                   </Stack>
-                  {user.client && (
+                  {user.organisation && (
                     <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                      <BusinessOutlinedIcon sx={{ color: "text.secondary", fontSize: 18 }} />
+                      <DomainOutlinedIcon sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Link
-                        href={`/clients/${user.client.id}`}
+                        href={`/organisations/${user.organisation.id}`}
                         style={{ color: "inherit", textDecoration: "none" }}
                       >
                         <Typography
                           variant="body2"
                           sx={{ color: "primary.main", "&:hover": { textDecoration: "underline" } }}
                         >
-                          {user.client.name}
+                          {user.organisation.name}
                         </Typography>
                       </Link>
                     </Stack>

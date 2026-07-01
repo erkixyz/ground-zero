@@ -55,10 +55,23 @@ describe('OrganisationsService', () => {
       await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
     });
 
-    it('returns organisation when found', async () => {
-      const org = { id: '1', name: 'Acme OÜ', regCode: '12345678', createdAt: new Date() };
+    it('returns organisation with linked users when found', async () => {
+      const org = {
+        id: '1',
+        name: 'Acme OÜ',
+        regCode: '12345678',
+        createdAt: new Date(),
+        users: [{ id: 'u1', firstName: 'Erki', lastName: 'K', email: 'e@test.ee' }],
+      };
       mockPrisma.read.organisation.findUnique.mockResolvedValue(org);
-      expect(await service.findOne('1')).toEqual(org);
+
+      const result = await service.findOne('1');
+
+      expect(result).toEqual(org);
+      expect(mockPrisma.read.organisation.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+        select: expect.objectContaining({ users: expect.any(Object) }),
+      });
     });
   });
 

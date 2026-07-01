@@ -26,7 +26,7 @@ export class ClientsService {
   async findOne(id: string) {
     const client = await this.prisma.read.client.findUnique({
       where: { id },
-      select: { ...clientSelect, users: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      select: clientSelect,
     });
     if (!client) throw new NotFoundException("Klienti ei leitud");
     return client;

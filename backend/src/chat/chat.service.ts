@@ -197,7 +197,7 @@ const TOOLS = [
     type: "function",
     function: {
       name: "get_client",
-      description: "Get a single client by their ID, including their linked users",
+      description: "Get a single client by their ID",
       parameters: {
         type: "object",
         properties: {
@@ -492,23 +492,13 @@ export class ChatService {
   private async getClient(args: Record<string, unknown>): Promise<string> {
     const client = await this.prisma.read.client.findUnique({
       where: { id: args.id as string },
-      select: {
-        id: true,
-        name: true,
-        regCode: true,
-        createdAt: true,
-        users: { select: { id: true, firstName: true, lastName: true, email: true } },
-      },
+      select: { id: true, name: true, regCode: true, createdAt: true },
     });
     if (!client) return `Client id=${args.id} not found.`;
-    const users = client.users.length
-      ? client.users.map((u) => `  - ${u.firstName} ${u.lastName} <${u.email}>`).join("\n")
-      : "  (no linked users)";
     return (
       `[id:${client.id}] "${client.name}"` +
       (client.regCode ? `\nReg code: ${client.regCode}` : "") +
-      `\nCreated: ${client.createdAt.toISOString().slice(0, 10)}` +
-      `\nUsers:\n${users}`
+      `\nCreated: ${client.createdAt.toISOString().slice(0, 10)}`
     );
   }
 

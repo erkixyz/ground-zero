@@ -7,11 +7,14 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
+import Chip from "@mui/material/Chip";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DomainOutlinedIcon from "@mui/icons-material/DomainOutlined";
 import FingerprintIcon from "@mui/icons-material/FingerprintOutlined";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import CalendarTodayIcon from "@mui/icons-material/CalendarTodayOutlined";
+import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import Link from "next/link";
 import { getServerTranslations } from "@/i18n/server";
 import { notFound } from "next/navigation";
 
@@ -32,6 +35,7 @@ type OrganisationDetail = {
   zip: string | null;
   country: string | null;
   createdAt: string;
+  users: { id: string; firstName: string; lastName: string; email: string }[];
 };
 
 export default async function OrganisationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -113,6 +117,35 @@ export default async function OrganisationPage({ params }: { params: Promise<{ i
                       {t.organisations.added}: {new Date(org.createdAt).toLocaleDateString(t.common.localeCode)}
                     </Typography>
                   </Stack>
+                </Stack>
+
+                <Divider />
+
+                <Stack spacing={1}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <PeopleOutlinedIcon sx={{ color: "text.secondary", fontSize: 18 }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {t.organisations.linkedUsers}
+                    </Typography>
+                  </Stack>
+                  {org.users.length === 0 ? (
+                    <Typography variant="body2" sx={{ color: "text.secondary", pl: 3.5 }}>
+                      {t.organisations.noLinkedUsers}
+                    </Typography>
+                  ) : (
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", pl: 3.5, gap: 1 }}>
+                      {org.users.map((u) => (
+                        <Link key={u.id} href={`/users/${u.id}`} style={{ textDecoration: "none" }}>
+                          <Chip
+                            label={`${u.firstName} ${u.lastName}`}
+                            size="small"
+                            clickable
+                            variant="outlined"
+                          />
+                        </Link>
+                      ))}
+                    </Stack>
+                  )}
                 </Stack>
               </Stack>
             </CardContent>

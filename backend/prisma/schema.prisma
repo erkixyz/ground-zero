@@ -20,7 +20,6 @@ model Client {
   country   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[]
 }
 
 model Organisation {
@@ -33,6 +32,7 @@ model Organisation {
   country   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  users     User[]
 }
 
 model User {
@@ -45,8 +45,8 @@ model User {
   lastName         String    @default("")
   roles         String[]  @default(["USER"])
   chatInputHistory String?
-  clientId      String?
-  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   createdAt        DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   notes         Note[]

@@ -26,7 +26,7 @@ export class OrganisationsService {
   async findOne(id: string) {
     const org = await this.prisma.read.organisation.findUnique({
       where: { id },
-      select: organisationSelect,
+      select: { ...organisationSelect, users: { select: { id: true, firstName: true, lastName: true, email: true } } },
     });
     if (!org) throw new NotFoundException("Organisatsiooni ei leitud");
     return org;

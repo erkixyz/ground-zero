@@ -49,8 +49,8 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
   const email = (formData.get("email") as string)?.trim();
   const password = (formData.get("password") as string) || undefined;
   const roles = formData.getAll("roles") as string[];
-  const clientIdRaw = formData.get("clientId") as string | null;
-  const clientId = clientIdRaw?.trim() || null;
+  const organisationIdRaw = formData.get("organisationId") as string | null;
+  const organisationId = organisationIdRaw?.trim() || null;
 
   if (!firstName) return { error: "Eesnimi on kohustuslik" };
   if (!lastName) return { error: "Perenimi on kohustuslik" };
@@ -62,7 +62,7 @@ export async function updateUser(id: string, _prev: UserFormState, formData: For
     res = await fetch(`${process.env.API_URL}/api/users/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
-      body: JSON.stringify({ firstName, lastName, email, password, clientId }),
+      body: JSON.stringify({ firstName, lastName, email, password, organisationId }),
     });
   } catch {
     return { error: "API ei vasta — kontrolli ühendust" };

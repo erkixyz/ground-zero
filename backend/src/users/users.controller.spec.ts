@@ -145,13 +145,13 @@ describe('UsersController', () => {
       }));
     });
 
-    it('passes clientId to service when provided', async () => {
+    it('passes organisationId to service when provided', async () => {
       mockUsersService.update.mockResolvedValue({ id: 'u2' });
-      const dto = { firstName: 'Uus', lastName: 'K', email: 'e@test.ee', clientId: 'c-123' };
+      const dto = { firstName: 'Uus', lastName: 'K', email: 'e@test.ee', organisationId: 'o-123' };
 
       await controller.update('u2', dto as any, regularUser as any);
 
-      expect(mockUsersService.update).toHaveBeenCalledWith('u2', expect.objectContaining({ clientId: 'c-123' }));
+      expect(mockUsersService.update).toHaveBeenCalledWith('u2', expect.objectContaining({ organisationId: 'o-123' }));
     });
   });
 

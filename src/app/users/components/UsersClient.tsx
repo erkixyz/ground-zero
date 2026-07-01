@@ -26,7 +26,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import Link from "next/link";
 import UserFormDialog, { UserRow } from "./UserFormDialog";
-import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
+import DomainOutlinedIcon from "@mui/icons-material/DomainOutlined";
 import { deleteUser } from "../actions";
 import { useAuth } from "@/app/components/AuthProvider";
 import { useLanguage } from "@/context/LanguageContext";
@@ -105,7 +105,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                 <TableCell>{t.users.firstName}</TableCell>
                 <TableCell>{t.users.lastName}</TableCell>
                 <TableCell>{t.users.email}</TableCell>
-                <TableCell>{t.clients.client}</TableCell>
+                <TableCell>{t.organisations.organisation}</TableCell>
                 <TableCell>{t.users.role}</TableCell>
                 <TableCell>{t.users.added}</TableCell>
                 <TableCell align="right">{t.users.actions}</TableCell>
@@ -134,11 +134,11 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                       </Link>
                     </TableCell>
                     <TableCell sx={{ fontSize: 12 }}>
-                      {user.client ? (
-                        <Link href={`/clients/${user.client.id}`} style={{ textDecoration: "none" }}>
+                      {user.organisation ? (
+                        <Link href={`/organisations/${user.organisation.id}`} style={{ textDecoration: "none" }}>
                           <Chip
-                            icon={<BusinessOutlinedIcon />}
-                            label={user.client.name}
+                            icon={<DomainOutlinedIcon />}
+                            label={user.organisation.name}
                             size="small"
                             variant="outlined"
                             clickable
@@ -146,7 +146,7 @@ export default function UsersClient({ users }: { users: UserRow[] }) {
                         </Link>
                       ) : (
                         <Typography component="span" sx={{ color: "text.disabled", fontSize: 12 }}>
-                          {t.clients.noClient}
+                          {t.organisations.noOrganisation}
                         </Typography>
                       )}
                     </TableCell>

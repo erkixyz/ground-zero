@@ -106,3 +106,8 @@ export async function deleteTestOrganisation(request: APIRequestContext, id: str
     headers: cookie ? { Cookie: cookie } : {},
   });
 }
+
+export function getUserOrganisationId(userId: string): string | null {
+  const result = psql(`SELECT "organisationId" FROM "User" WHERE id='${userId}'`);
+  return result || null;
+}

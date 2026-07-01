@@ -108,7 +108,7 @@ export class UsersController {
       email: dto.email?.trim().toLowerCase() || undefined,
       password: dto.password || undefined,
       chatInputHistory: dto.chatInputHistory,
-      ...("clientId" in dto ? { clientId: dto.clientId ?? null } : {}),
+      ...("organisationId" in dto ? { organisationId: dto.organisationId ?? null } : {}),
     });
   }
 

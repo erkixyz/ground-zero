@@ -5,7 +5,7 @@ import { MailService } from "../mail/mail.service";
 import { hashPassword } from "../auth/better-auth";
 import { ALL_ROLES, Role } from "../auth/permissions";
 
-const clientSelect = {
+const organisationSelect = {
   id: true,
   name: true,
   regCode: true,
@@ -17,8 +17,8 @@ const userSelect = {
   lastName: true,
   email: true,
   roles: true,
-  clientId: true,
-  client: { select: clientSelect },
+  organisationId: true,
+  organisation: { select: organisationSelect },
   createdAt: true,
 };
 
@@ -98,7 +98,7 @@ export class UsersService {
     email?: string;
     password?: string;
     chatInputHistory?: string[];
-    clientId?: string | null;
+    organisationId?: string | null;
   }) {
     const user = await this.prisma.write.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("Kasutajat ei leitud");
@@ -108,7 +108,7 @@ export class UsersService {
     if (data.lastName) updateData.lastName = data.lastName;
     if (data.email) updateData.email = data.email;
     if (data.chatInputHistory !== undefined) updateData.chatInputHistory = JSON.stringify(data.chatInputHistory);
-    if ("clientId" in data) updateData.clientId = data.clientId ?? null;
+    if ("organisationId" in data) updateData.organisationId = data.organisationId ?? null;
 
     if (data.firstName || data.lastName) {
       updateData.name = `${data.firstName ?? user.firstName} ${data.lastName ?? user.lastName}`.trim();

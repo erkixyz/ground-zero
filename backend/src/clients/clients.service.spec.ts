@@ -56,13 +56,12 @@ describe('ClientsService', () => {
       await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
     });
 
-    it('returns client with users when found', async () => {
+    it('returns client when found', async () => {
       const client = {
         id: '1',
         name: 'Acme OÜ',
         regCode: '12345678',
         createdAt: new Date(),
-        users: [{ id: 'u1', firstName: 'Erki', lastName: 'K', email: 'e@test.ee' }],
       };
       mockPrisma.read.client.findUnique.mockResolvedValue(client);
 
@@ -71,7 +70,7 @@ describe('ClientsService', () => {
       expect(result).toEqual(client);
       expect(mockPrisma.read.client.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
-        select: expect.objectContaining({ users: expect.any(Object) }),
+        select: expect.not.objectContaining({ users: expect.anything() }),
       });
     });
   });

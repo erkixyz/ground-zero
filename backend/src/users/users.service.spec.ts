@@ -274,30 +274,30 @@ describe('UsersService', () => {
       );
     });
 
-    it('sets clientId when provided', async () => {
+    it('sets organisationId when provided', async () => {
       const existing = { id: '1', firstName: 'Erki', lastName: 'K', email: 'e@test.ee' };
       mockPrisma.write.user.findUnique.mockResolvedValue(existing);
-      mockPrisma.write.user.update.mockResolvedValue({ ...existing, clientId: 'c-123', createdAt: new Date() });
+      mockPrisma.write.user.update.mockResolvedValue({ ...existing, organisationId: 'o-123', createdAt: new Date() });
 
-      await service.update('1', { clientId: 'c-123' });
+      await service.update('1', { organisationId: 'o-123' });
 
       expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ clientId: 'c-123' }),
+          data: expect.objectContaining({ organisationId: 'o-123' }),
         }),
       );
     });
 
-    it('clears clientId when null passed', async () => {
+    it('clears organisationId when null passed', async () => {
       const existing = { id: '1', firstName: 'Erki', lastName: 'K', email: 'e@test.ee' };
       mockPrisma.write.user.findUnique.mockResolvedValue(existing);
-      mockPrisma.write.user.update.mockResolvedValue({ ...existing, clientId: null, createdAt: new Date() });
+      mockPrisma.write.user.update.mockResolvedValue({ ...existing, organisationId: null, createdAt: new Date() });
 
-      await service.update('1', { clientId: null });
+      await service.update('1', { organisationId: null });
 
       expect(mockPrisma.write.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ clientId: null }),
+          data: expect.objectContaining({ organisationId: null }),
         }),
       );
     });
