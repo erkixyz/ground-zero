@@ -98,66 +98,68 @@ export default function TopBar() {
             Ground Zero
           </Typography>
 
-          <Button
-            component={Link}
-            href="/"
-            size="small"
-            startIcon={<NoteOutlinedIcon />}
-            sx={{
-              color: pathname === "/" ? "primary.main" : "text.secondary",
-              fontWeight: pathname === "/" ? 700 : 400,
-            }}
-          >
-            {t.nav.notes}
-          </Button>
-          <Button
-            component={Link}
-            href="/users"
-            size="small"
-            startIcon={<PeopleOutlinedIcon />}
-            sx={{
-              color: pathname === "/users" ? "primary.main" : "text.secondary",
-              fontWeight: pathname === "/users" ? 700 : 400,
-            }}
-          >
-            {t.nav.users}
-          </Button>
-          <Button
-            component={Link}
-            href="/clients"
-            size="small"
-            startIcon={<BusinessOutlinedIcon />}
-            sx={{
-              color: pathname.startsWith("/clients") ? "primary.main" : "text.secondary",
-              fontWeight: pathname.startsWith("/clients") ? 700 : 400,
-            }}
-          >
-            {t.clients.title}
-          </Button>
-          <Button
-            component={Link}
-            href="/organisations"
-            size="small"
-            startIcon={<DomainOutlinedIcon />}
-            sx={{
-              color: pathname.startsWith("/organisations") ? "primary.main" : "text.secondary",
-              fontWeight: pathname.startsWith("/organisations") ? 700 : 400,
-            }}
-          >
-            {t.organisations.title}
-          </Button>
-          <Button
-            component={Link}
-            href="/chat"
-            size="small"
-            startIcon={<SmartToyIcon />}
-            sx={{
-              color: pathname === "/chat" ? "primary.main" : "text.secondary",
-              fontWeight: pathname === "/chat" ? 700 : 400,
-            }}
-          >
-            {t.nav.chat}
-          </Button>
+          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5 }}>
+            <Button
+              component={Link}
+              href="/"
+              size="small"
+              startIcon={<NoteOutlinedIcon />}
+              sx={{
+                color: pathname === "/" ? "primary.main" : "text.secondary",
+                fontWeight: pathname === "/" ? 700 : 400,
+              }}
+            >
+              {t.nav.notes}
+            </Button>
+            <Button
+              component={Link}
+              href="/users"
+              size="small"
+              startIcon={<PeopleOutlinedIcon />}
+              sx={{
+                color: pathname === "/users" ? "primary.main" : "text.secondary",
+                fontWeight: pathname === "/users" ? 700 : 400,
+              }}
+            >
+              {t.nav.users}
+            </Button>
+            <Button
+              component={Link}
+              href="/clients"
+              size="small"
+              startIcon={<BusinessOutlinedIcon />}
+              sx={{
+                color: pathname.startsWith("/clients") ? "primary.main" : "text.secondary",
+                fontWeight: pathname.startsWith("/clients") ? 700 : 400,
+              }}
+            >
+              {t.clients.title}
+            </Button>
+            <Button
+              component={Link}
+              href="/organisations"
+              size="small"
+              startIcon={<DomainOutlinedIcon />}
+              sx={{
+                color: pathname.startsWith("/organisations") ? "primary.main" : "text.secondary",
+                fontWeight: pathname.startsWith("/organisations") ? 700 : 400,
+              }}
+            >
+              {t.organisations.title}
+            </Button>
+            <Button
+              component={Link}
+              href="/chat"
+              size="small"
+              startIcon={<SmartToyIcon />}
+              sx={{
+                color: pathname === "/chat" ? "primary.main" : "text.secondary",
+                fontWeight: pathname === "/chat" ? 700 : 400,
+              }}
+            >
+              {t.nav.chat}
+            </Button>
+          </Box>
 
           <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center" }}>
             <Tooltip title={`${t.search.placeholder} (${t.search.shortcut})`}>

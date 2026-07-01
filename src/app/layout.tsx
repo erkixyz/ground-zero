@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import Providers from "@/app/components/Providers";
 import TopBar from "@/app/components/TopBar";
+import BottomNav from "@/app/components/BottomNav";
 import LiveReloader from "@/app/components/LiveReloader";
 import Box from "@mui/material/Box";
 import "./globals.css";
@@ -21,7 +22,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LiveReloader />
           <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
             <TopBar />
-            {children}
+            <Box sx={{ pb: { xs: 7, md: 0 } }}>
+              {children}
+            </Box>
+            <BottomNav />
           </Box>
         </Providers>
       </body>
