@@ -11,6 +11,8 @@ const translations = {
       login: "Logi sisse",
       logout: "Logi välja",
       profile: "Profiil",
+      menu: "Menüü",
+      tools: "Tööriistad",
     },
     services: {
       links: "Teenuste lingid",
@@ -230,6 +232,8 @@ const translations = {
       login: "Log in",
       logout: "Log out",
       profile: "Profile",
+      menu: "Menu",
+      tools: "Tools",
     },
     services: {
       links: "Service links",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -28,6 +28,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import SearchIcon from "@mui/icons-material/Search";
 import ArticleIcon from "@mui/icons-material/Article";
 import MenuIcon from "@mui/icons-material/Menu";
+import HandymanIcon from "@mui/icons-material/Handyman";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
@@ -83,11 +84,19 @@ export default function TopBar() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [readmeOpen, setReadmeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "";
   const serviceLinks = SERVICE_LINKS(t.services.infrastructure);
+
+  const navItems = [
+    { label: t.nav.notes, href: "/", icon: <NoteOutlinedIcon fontSize="small" />, active: pathname === "/" },
+    { label: t.nav.users, href: "/users", icon: <PeopleOutlinedIcon fontSize="small" />, active: pathname === "/users" },
+    { label: t.clients.title, href: "/clients", icon: <BusinessOutlinedIcon fontSize="small" />, active: pathname.startsWith("/clients") },
+    { label: t.organisations.title, href: "/organisations", icon: <DomainOutlinedIcon fontSize="small" />, active: pathname.startsWith("/organisations") },
+    { label: t.nav.chat, href: "/chat", icon: <SmartToyIcon fontSize="small" />, active: pathname === "/chat" },
+  ];
 
   return (
     <>
@@ -97,69 +106,6 @@ export default function TopBar() {
           <Typography variant="h6" sx={{ fontWeight: 700, mr: 1 }}>
             Ground Zero
           </Typography>
-
-          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5 }}>
-            <Button
-              component={Link}
-              href="/"
-              size="small"
-              startIcon={<NoteOutlinedIcon />}
-              sx={{
-                color: pathname === "/" ? "primary.main" : "text.secondary",
-                fontWeight: pathname === "/" ? 700 : 400,
-              }}
-            >
-              {t.nav.notes}
-            </Button>
-            <Button
-              component={Link}
-              href="/users"
-              size="small"
-              startIcon={<PeopleOutlinedIcon />}
-              sx={{
-                color: pathname === "/users" ? "primary.main" : "text.secondary",
-                fontWeight: pathname === "/users" ? 700 : 400,
-              }}
-            >
-              {t.nav.users}
-            </Button>
-            <Button
-              component={Link}
-              href="/clients"
-              size="small"
-              startIcon={<BusinessOutlinedIcon />}
-              sx={{
-                color: pathname.startsWith("/clients") ? "primary.main" : "text.secondary",
-                fontWeight: pathname.startsWith("/clients") ? 700 : 400,
-              }}
-            >
-              {t.clients.title}
-            </Button>
-            <Button
-              component={Link}
-              href="/organisations"
-              size="small"
-              startIcon={<DomainOutlinedIcon />}
-              sx={{
-                color: pathname.startsWith("/organisations") ? "primary.main" : "text.secondary",
-                fontWeight: pathname.startsWith("/organisations") ? 700 : 400,
-              }}
-            >
-              {t.organisations.title}
-            </Button>
-            <Button
-              component={Link}
-              href="/chat"
-              size="small"
-              startIcon={<SmartToyIcon />}
-              sx={{
-                color: pathname === "/chat" ? "primary.main" : "text.secondary",
-                fontWeight: pathname === "/chat" ? 700 : 400,
-              }}
-            >
-              {t.nav.chat}
-            </Button>
-          </Box>
 
           <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center" }}>
             <Tooltip title={`${t.search.placeholder} (${t.search.shortcut})`}>
@@ -188,12 +134,6 @@ export default function TopBar() {
                 </IconButton>
               </Tooltip>
             ))}
-
-            <Tooltip title={t.nav.readme}>
-              <IconButton size="small" onClick={() => setReadmeOpen(true)} sx={{ color: "text.secondary" }}>
-                <ArticleIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
 
             {user ? (
               <>
@@ -234,7 +174,13 @@ export default function TopBar() {
               </Button>
             )}
 
-            <Tooltip title={t.nav.services}>
+            <Tooltip title={t.nav.tools}>
+              <IconButton size="small" onClick={() => setToolsOpen(true)} sx={{ color: "text.secondary" }}>
+                <HandymanIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title={t.nav.menu}>
               <IconButton size="small" onClick={() => setMenuOpen(true)} sx={{ color: "text.secondary" }}>
                 <MenuIcon fontSize="small" />
               </IconButton>
@@ -243,7 +189,66 @@ export default function TopBar() {
         </Toolbar>
       </AppBar>
 
+      {/* Navigation + README drawer */}
       <Drawer anchor="right" open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <Box sx={{ width: 260, pt: 1 }}>
+          <Typography variant="overline" sx={{ px: 2, color: "text.disabled", fontSize: 10 }}>
+            {t.nav.services}
+          </Typography>
+          <List dense disablePadding>
+            {navItems.map((item) => (
+              <ListItemButton
+                key={item.href}
+                component={Link}
+                href={item.href}
+                selected={item.active}
+                onClick={() => setMenuOpen(false)}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 36,
+                    color: item.active ? "primary.main" : "text.secondary",
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  slotProps={{
+                    primary: {
+                      sx: {
+                        fontSize: 14,
+                        fontWeight: item.active ? 700 : 400,
+                        color: item.active ? "primary.main" : "text.primary",
+                      },
+                    },
+                  }}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+          <Divider sx={{ my: 0.5 }} />
+          <List dense disablePadding>
+            <ListItemButton
+              onClick={() => {
+                setMenuOpen(false);
+                setReadmeOpen(true);
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
+                <ArticleIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={t.nav.readme}
+                slotProps={{ primary: { sx: { fontSize: 14 } } }}
+              />
+            </ListItemButton>
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Tools / services drawer */}
+      <Drawer anchor="right" open={toolsOpen} onClose={() => setToolsOpen(false)}>
         <Box sx={{ width: 260, pt: 1 }}>
           <Typography variant="overline" sx={{ px: 2, color: "text.disabled", fontSize: 10 }}>
             {t.services.links}
@@ -262,7 +267,7 @@ export default function TopBar() {
                     href={item.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => setToolsOpen(false)}
                   >
                     <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
                       {item.icon}
