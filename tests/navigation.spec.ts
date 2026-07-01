@@ -19,9 +19,9 @@ test.describe("Navigatsioon ja TopBar", () => {
     await expect(page).toHaveURL("/users");
   });
 
-  test("hamburgermenüü avaneb ja kuvab teenuste lingid", async ({ page }) => {
+  test("tööriistade sahtel avaneb ja kuvab teenuste lingid", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Teenused" }).click();
+    await page.getByRole("button", { name: "Tööriistad" }).click();
 
     await expect(page.getByText("Grafana", { exact: true })).toBeVisible();
     await expect(page.getByText("Prometheus", { exact: true })).toBeVisible();
@@ -31,18 +31,18 @@ test.describe("Navigatsioon ja TopBar", () => {
     await expect(page.getByText("Swagger UI", { exact: true })).toBeVisible();
   });
 
-  test("hamburgermenüü Grafana link on korrektne", async ({ page }) => {
+  test("tööriistade sahtli Grafana link on korrektne", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Teenused" }).click();
+    await page.getByRole("button", { name: "Tööriistad" }).click();
 
     const grafanaLink = page.getByRole("link", { name: /grafana/i }).first();
     await expect(grafanaLink).toHaveAttribute("href", "http://localhost:3002");
     await expect(grafanaLink).toHaveAttribute("target", "_blank");
   });
 
-  test("hamburgermenüü sulgub Escape klahviga", async ({ page }) => {
+  test("tööriistade sahtel sulgub Escape klahviga", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Teenused" }).click();
+    await page.getByRole("button", { name: "Tööriistad" }).click();
     await expect(page.getByText("Grafana", { exact: true })).toBeVisible();
 
     await page.keyboard.press("Escape");

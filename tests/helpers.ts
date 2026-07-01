@@ -87,3 +87,22 @@ export async function deleteTestClient(request: APIRequestContext, id: string) {
     headers: cookie ? { Cookie: cookie } : {},
   });
 }
+
+export async function createTestOrganisation(
+  request: APIRequestContext,
+  data: { name: string; regCode?: string },
+) {
+  const cookie = await getAuthCookie(request);
+  const res = await request.post(`${API}/api/organisations`, {
+    data,
+    headers: cookie ? { Cookie: cookie } : {},
+  });
+  return res.json();
+}
+
+export async function deleteTestOrganisation(request: APIRequestContext, id: string) {
+  const cookie = await getAuthCookie(request);
+  await request.delete(`${API}/api/organisations/${id}`, {
+    headers: cookie ? { Cookie: cookie } : {},
+  });
+}
