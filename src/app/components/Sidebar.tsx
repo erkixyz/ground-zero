@@ -17,20 +17,23 @@ import ArticleIcon from "@mui/icons-material/Article";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "./AuthProvider";
 import ReadmeDrawer from "./ReadmeDrawer";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [readmeOpen, setReadmeOpen] = useState(false);
+  const isGlobalAdmin = user?.roles?.includes("GLOBAL_ADMIN") ?? false;
 
   const navItems = [
     { label: t.nav.notes, href: "/", icon: <NoteOutlinedIcon fontSize="small" />, active: pathname === "/" },
-    { label: t.nav.users, href: "/users", icon: <PeopleOutlinedIcon fontSize="small" />, active: pathname === "/users" },
+    isGlobalAdmin && { label: t.nav.users, href: "/users", icon: <PeopleOutlinedIcon fontSize="small" />, active: pathname === "/users" },
     { label: t.clients.title, href: "/clients", icon: <BusinessOutlinedIcon fontSize="small" />, active: pathname.startsWith("/clients") },
     { label: t.organisations.title, href: "/organisations", icon: <DomainOutlinedIcon fontSize="small" />, active: pathname.startsWith("/organisations") },
     { label: t.nav.chat, href: "/chat", icon: <SmartToyIcon fontSize="small" />, active: pathname === "/chat" },
-  ];
+  ].filter(Boolean) as { label: string; href: string; icon: React.ReactNode; active: boolean }[];
 
   return (
     <>

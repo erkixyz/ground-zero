@@ -88,14 +88,15 @@ export default function TopBar() {
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "";
   const serviceLinks = SERVICE_LINKS(t.services.infrastructure);
+  const isGlobalAdmin = user?.roles?.includes("GLOBAL_ADMIN") ?? false;
 
   const navItems = [
     { label: t.nav.notes, href: "/", icon: <NoteOutlinedIcon fontSize="small" />, active: pathname === "/" },
-    { label: t.nav.users, href: "/users", icon: <PeopleOutlinedIcon fontSize="small" />, active: pathname === "/users" },
+    isGlobalAdmin && { label: t.nav.users, href: "/users", icon: <PeopleOutlinedIcon fontSize="small" />, active: pathname === "/users" },
     { label: t.clients.title, href: "/clients", icon: <BusinessOutlinedIcon fontSize="small" />, active: pathname.startsWith("/clients") },
     { label: t.organisations.title, href: "/organisations", icon: <DomainOutlinedIcon fontSize="small" />, active: pathname.startsWith("/organisations") },
     { label: t.nav.chat, href: "/chat", icon: <SmartToyIcon fontSize="small" />, active: pathname === "/chat" },
-  ];
+  ].filter(Boolean) as { label: string; href: string; icon: React.ReactNode; active: boolean }[];
 
   return (
     <>
