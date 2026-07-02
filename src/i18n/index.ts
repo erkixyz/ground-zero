@@ -222,6 +222,9 @@ const translations = {
       unknownError: "tundmatu viga",
       localeCode: "et-EE",
     },
+    footer: {
+      rights: "Kõik õigused kaitstud.",
+    },
   },
   en: {
     nav: {
@@ -443,6 +446,9 @@ const translations = {
     common: {
       unknownError: "unknown error",
       localeCode: "en-US",
+    },
+    footer: {
+      rights: "All rights reserved.",
     },
   },
 } as const;
