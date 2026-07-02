@@ -24,13 +24,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LiveReloader />
           <Box sx={{ minHeight: "100vh", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
             <TopBar />
-            <Box sx={{ display: "flex", alignItems: "flex-start", flex: 1 }}>
+            <Box sx={{ display: "flex", flex: 1 }}>
               <Sidebar />
-              <Box component="main" sx={{ flex: 1, minWidth: 0, pb: { xs: 7, md: 0 } }}>
-                {children}
+              <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                <Box component="main" sx={{ flex: 1, minWidth: 0 }}>
+                  {children}
+                </Box>
+                <Footer />
               </Box>
             </Box>
-            <Footer />
             <BottomNav />
           </Box>
         </Providers>
